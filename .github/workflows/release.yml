@@ -1,0 +1,78 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v1.0.0, v1.1.0, etc.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          
+      - name: Get dependencies
+        run: flutter pub get
+        
+      - name: Build APK
+        run: flutter build apk --release
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: South Dakota Weather App ${{ github.ref_name }}
+          body: |
+            ## South Dakota Weather App v${{ github.ref_name }}
+            
+            ### What's New
+            - Latest version of the South Dakota Weather App
+            - Built for Android devices
+            
+            ### Installation
+            1. Download the APK file above
+            2. Enable "Install from Unknown Sources" in your Android settings
+            3. Install the APK file
+            
+            ### Features
+            - Real-time weather data for South Dakota cities
+            - National Weather Service alerts
+            - Hourly and daily forecasts
+            - Weather radar
+            - Area Forecast Discussions (AFD)
+            - Storm Prediction Center outlooks
+            
+            ### System Requirements
+            - Android 5.0 (API level 21) or higher
+            
+            ### Support
+            If you encounter any issues, please report them on the GitHub repository.
+          draft: false
+          prerelease: false
+          
+      - name: Upload APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
+          asset_name: sodak-weather-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive 

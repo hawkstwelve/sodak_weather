@@ -1,5 +1,7 @@
 # SoDak Weather
 
+[![Latest Release](https://img.shields.io/github/v/release/hawkstwelve/sodak_weather?label=Latest%20Release&style=for-the-badge)](https://github.com/hawkstwelve/sodak_weather/releases/latest)
+
 A beautiful, performance-optimized weather application for South Dakota built with Flutter. This app provides current weather conditions, hourly and daily forecasts, weather radar, severe weather alerts, and Area Forecast Discussion (AFD) information from the National Weather Service.
 
 ![SoDak Weather App](assets/splash.png)
@@ -16,6 +18,36 @@ A beautiful, performance-optimized weather application for South Dakota built wi
 - **Multiple Locations**: Support for major South Dakota cities
 - **Beautiful UI**: Modern, glassmorphic interface with dynamic backgrounds based on weather conditions
 - **Performance Optimized**: Designed for smooth performance on all devices
+
+## 📱 Installation
+
+### Download APK (Recommended for Users)
+
+The easiest way to install SoDak Weather is to download the latest APK from our GitHub releases:
+
+1. **Go to the [Releases page](https://github.com/hawkstwelve/sodak_weather/releases)**
+2. **Download the latest APK file** (e.g., `sodak-weather-v1.0.0.apk`)
+3. **Enable "Install from Unknown Sources"** on your Android device:
+   - Go to Settings → Security → Unknown Sources
+   - Or Settings → Apps → Special app access → Install unknown apps
+4. **Install the APK** by tapping on the downloaded file
+5. **Enjoy SoDak Weather!**
+
+### System Requirements
+- Android 5.0 (API level 21) or higher
+- Internet connection for weather data
+- Location services (optional, for future features)
+
+### Troubleshooting Installation
+- **"App not installed" error**: Make sure you've enabled "Install from Unknown Sources"
+- **"Parse error"**: The APK might be corrupted, try downloading again
+- **"App not compatible"**: Check that your Android version meets the requirements
+
+### 🔄 Auto-Updates
+Currently, the app doesn't support auto-updates. To get the latest version:
+1. Check the [releases page](https://github.com/hawkstwelve/sodak_weather/releases) for updates
+2. Download and install the new APK
+3. The new version will replace the old one automatically
 
 ## APIs Used
 
@@ -102,118 +134,4 @@ lib/
 ### Models
 
 - `SDCity` - Represents South Dakota cities with location data and NWS office identifiers
-- `WeatherData` - Contains current conditions and forecast data
-- `HourlyForecast` - Represents hourly weather data points
-- `NWSAlert` - Weather alert and warning data
-- `SPCOutlook` - Storm Prediction Center outlook data
-
-### Screens
-
-- `WeatherScreen` - The main screen showing current weather and forecasts
-- `RadarScreen` - Interactive weather radar with animation
-- `SPCOutlooksScreen` - Storm Prediction Center outlooks
-- `AFDScreen` - Displays the Area Forecast Discussion text from NWS
-
-### Services
-
-- `WeatherService` - Handles Google Weather API communication
-- `RainViewerAPI` - Manages radar data and imagery
-- `NWSAlertService` - Handles weather alerts and warnings
-- `SPCOutlookService` - Manages SPC outlook data
-- `AFDService` - Handles Area Forecast Discussion data
-
-### Widgets
-
-- `GlassCard/GlassContainer` - Creates a frosted glass effect for UI elements
-- `ForecastCard` - Displays daily forecast information
-- `HourlyForecastCard` - Displays hourly forecast information
-- `RadarCard` - Radar preview and navigation
-- `NWSAlertBanner` - Weather alert notifications
-- `PrecipitationChart` - Precipitation visualization
-- `FrostedBackground` - Creates a gradient background for screens
-
-### Theme
-
-- `AppTheme` - Contains app-wide styling including colors, text styles, and themes
-- **Inter Font** - Modern typography via Google Fonts
-
-## UI Design
-
-The app uses a modern glassmorphic design language with:
-
-- Frosted glass panels for content with performance optimizations
-- Dynamic gradient backgrounds that change based on weather conditions
-- Weather condition-specific icons and color schemes
-- Optimized performance for smooth animations and transitions
-- Modern Inter font family for clean typography
-
-## Performance Optimizations
-
-- **Glass Effect Optimization**: Custom-built glassmorphism with performance considerations
-- **Radar Performance**: Optimized tile loading and caching for smooth radar experience
-- **Efficient Widget Rebuilds**: Smart state management to minimize unnecessary rebuilds
-- **Image Caching**: Weather icons and radar tiles are cached for better performance
-- **Scroll Optimization**: Custom scroll views for glass cards in lists
-- **Memory Management**: Proper disposal of resources and controllers
-
-## Getting Started
-
-### Prerequisites
-
-- Flutter SDK (Version ^3.8.1)
-- Dart SDK (Version ^3.8.1)
-- A Google Weather API key
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone https://github.com/hawkstwelve/sodak_weather.git
-cd sodak_weather
-```
-
-2. Install dependencies
-```bash
-flutter pub get
-```
-
-3. Update the API key in `lib/services/weather_service.dart`
-
-4. Run the app
-```bash
-flutter run
-```
-
-### Building for Release
-
-For Android:
-```bash
-flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
-```
-
-For iOS:
-```bash
-flutter build ios --release
-```
-
-## Future Enhancements
-
-- Push notifications for severe weather alerts
-- User location detection
-- Weather station selection
-- Historical weather data
-- Weather widgets for home screen
-- Additional radar products (velocity, reflectivity)
-- Weather camera integration
-
-## Credits
-
-- Weather data provided by Google Weather API and National Weather Service
-- Radar data provided by RainViewer
-- Severe weather outlooks from Storm Prediction Center
-- Weather icons from [OpenWeatherMap](https://openweathermap.org/weather-conditions)
-- Typography: Inter font via Google Fonts
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- `WeatherData`

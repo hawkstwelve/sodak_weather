@@ -40,6 +40,10 @@ lib/config/api_config.dart
 .pub-cache/
 .pub/
 /build/
+analysis_options.yaml
+devtools_options.yaml
+pubspec.lock
+/reference/
 
 # Symbolication related
 app.*.symbols
