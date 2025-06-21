@@ -29,19 +29,22 @@ jobs:
         run: flutter pub get
         
       - name: Create API config for build
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          STADIA_MAPS_API_KEY: ${{ secrets.STADIA_MAPS_API_KEY }}
         run: |
           mkdir -p lib/config
           cat > lib/config/api_config.dart << 'EOF'
           class ApiConfig {
-            // Placeholder API keys for build - replace with real keys for production
+            // API keys from environment variables (GitHub Secrets)
             static const String stadiaMapsApiKey = String.fromEnvironment(
               'STADIA_MAPS_API_KEY',
-              defaultValue: 'placeholder_key_for_build',
+              defaultValue: '${STADIA_MAPS_API_KEY}',
             );
             
             static const String googleApiKey = String.fromEnvironment(
               'GOOGLE_API_KEY',
-              defaultValue: 'placeholder_key_for_build',
+              defaultValue: '${GOOGLE_API_KEY}',
             );
             
             // Base URLs for Stadia Maps tiles
@@ -54,7 +57,10 @@ jobs:
           EOF
         
       - name: Build APK
-        run: flutter build apk --release
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          STADIA_MAPS_API_KEY: ${{ secrets.STADIA_MAPS_API_KEY }}
+        run: flutter build apk --release --dart-define=GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} --dart-define=STADIA_MAPS_API_KEY=${{ secrets.STADIA_MAPS_API_KEY }}
         
       - name: Create Release
         id: create_release
@@ -70,6 +76,7 @@ jobs:
             ### What's New
             - Latest version of the South Dakota Weather App
             - Built for Android devices
+            - Includes real weather data functionality
             
             ### Installation
             1. Download the APK file above
