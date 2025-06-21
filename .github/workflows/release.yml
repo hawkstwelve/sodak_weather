@@ -29,20 +29,23 @@ jobs:
         run: flutter pub get
         
       - name: Create API config for build
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          STADIA_MAPS_API_KEY: ${{ secrets.STADIA_MAPS_API_KEY }}
         run: |
           mkdir -p lib/config
-          cat > lib/config/api_config.dart << 'EOF'
+          cat > lib/config/api_config.dart << EOF
           class ApiConfig {
             // API keys from GitHub Secrets
-            static const String stadiaMapsApiKey = '${{ secrets.STADIA_MAPS_API_KEY }}';
-            static const String googleApiKey = '${{ secrets.GOOGLE_API_KEY }}';
+            static const String stadiaMapsApiKey = '$STADIA_MAPS_API_KEY';
+            static const String googleApiKey = '$GOOGLE_API_KEY';
             
             // Base URLs for Stadia Maps tiles
             static String get lightTileUrl => 
-              'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=$stadiaMapsApiKey';
+              'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=\$stadiaMapsApiKey';
             
             static String get darkTileUrl => 
-              'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=$stadiaMapsApiKey';
+              'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=\$stadiaMapsApiKey';
           }
           EOF
         
