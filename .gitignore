@@ -17,6 +17,9 @@ migrate_working_dir/
 .env.local
 .env.production
 
+# API Configuration (contains real API keys)
+lib/config/api_config.dart
+
 # IntelliJ related
 *.iml
 *.ipr
