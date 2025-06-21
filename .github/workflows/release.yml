@@ -29,23 +29,13 @@ jobs:
         run: flutter pub get
         
       - name: Create API config for build
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          STADIA_MAPS_API_KEY: ${{ secrets.STADIA_MAPS_API_KEY }}
         run: |
           mkdir -p lib/config
           cat > lib/config/api_config.dart << 'EOF'
           class ApiConfig {
-            // API keys from environment variables (GitHub Secrets)
-            static const String stadiaMapsApiKey = String.fromEnvironment(
-              'STADIA_MAPS_API_KEY',
-              defaultValue: '${STADIA_MAPS_API_KEY}',
-            );
-            
-            static const String googleApiKey = String.fromEnvironment(
-              'GOOGLE_API_KEY',
-              defaultValue: '${GOOGLE_API_KEY}',
-            );
+            // API keys from GitHub Secrets
+            static const String stadiaMapsApiKey = '${{ secrets.STADIA_MAPS_API_KEY }}';
+            static const String googleApiKey = '${{ secrets.GOOGLE_API_KEY }}';
             
             // Base URLs for Stadia Maps tiles
             static String get lightTileUrl => 
@@ -57,10 +47,7 @@ jobs:
           EOF
         
       - name: Build APK
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          STADIA_MAPS_API_KEY: ${{ secrets.STADIA_MAPS_API_KEY }}
-        run: flutter build apk --release --dart-define=GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} --dart-define=STADIA_MAPS_API_KEY=${{ secrets.STADIA_MAPS_API_KEY }}
+        run: flutter build apk --release
         
       - name: Create Release
         id: create_release
