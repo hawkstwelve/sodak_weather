@@ -28,6 +28,31 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
         
+      - name: Create API config for build
+        run: |
+          mkdir -p lib/config
+          cat > lib/config/api_config.dart << 'EOF'
+          class ApiConfig {
+            // Placeholder API keys for build - replace with real keys for production
+            static const String stadiaMapsApiKey = String.fromEnvironment(
+              'STADIA_MAPS_API_KEY',
+              defaultValue: 'placeholder_key_for_build',
+            );
+            
+            static const String googleApiKey = String.fromEnvironment(
+              'GOOGLE_API_KEY',
+              defaultValue: 'placeholder_key_for_build',
+            );
+            
+            // Base URLs for Stadia Maps tiles
+            static String get lightTileUrl => 
+              'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=$stadiaMapsApiKey';
+            
+            static String get darkTileUrl => 
+              'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=$stadiaMapsApiKey';
+          }
+          EOF
+        
       - name: Build APK
         run: flutter build apk --release
         
