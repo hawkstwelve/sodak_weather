@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/sd_city.dart';
 import '../services/rainviewer_api.dart';
+import '../config/api_config.dart';
 
 class RadarCard extends StatefulWidget {
   final SDCity city;
@@ -138,8 +139,8 @@ class _RadarCardState extends State<RadarCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final mapLayer = TileLayer(
       urlTemplate: isDark
-          ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=c0febc46-dcc9-448e-b5da-765b0873db13'
-          : 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=c0febc46-dcc9-448e-b5da-765b0873db13',
+          ? ApiConfig.darkTileUrl
+          : ApiConfig.lightTileUrl,
       userAgentPackageName: 'com.example.sodak_weather',
       retinaMode: RetinaMode.isHighDensity(context),
     );
@@ -190,7 +191,7 @@ class _RadarCardState extends State<RadarCard> {
         if (_capturingScreenshot)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),

@@ -7,10 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sd_city.dart';
 import '../models/hourly_forecast.dart';
 import '../models/weather_data.dart';
+import '../config/api_config.dart';
 
 class WeatherService {
   static const String _baseUrl = 'https://weather.googleapis.com/v1';
-  static const String _apiKey = 'AIzaSyDG_jrp7xl8Gmyb2UJ0abe5kEvPjLy5kj4';
   static const int cacheDurationMs = 10 * 60 * 1000; // 10 minutes
   static const Duration _timeout = Duration(seconds: 15);
   static const int _maxRetries = 2;
@@ -85,7 +85,7 @@ class WeatherService {
       final double latitude = city?.latitude ?? _defaultLatitude;
       final double longitude = city?.longitude ?? _defaultLongitude;
       final currentUrl = Uri.parse(
-        '$_baseUrl/currentConditions:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&key=$_apiKey',
+        '$_baseUrl/currentConditions:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&key=${ApiConfig.googleApiKey}',
       );
       final currentResponse = await _makeHttpRequest(currentUrl);
       if (currentResponse.statusCode != 200) {
@@ -96,7 +96,7 @@ class WeatherService {
 
       // Google Weather API: Forecast (10 days)
       final forecastUrl = Uri.parse(
-        '$_baseUrl/forecast/days:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&days=10&pageSize=10&key=$_apiKey',
+        '$_baseUrl/forecast/days:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&days=10&pageSize=10&key=${ApiConfig.googleApiKey}',
       );
       final forecastResponse = await _makeHttpRequest(forecastUrl);
       if (forecastResponse.statusCode != 200) {
@@ -138,7 +138,7 @@ class WeatherService {
       }
 
       final url = Uri.parse(
-        'https://airquality.googleapis.com/v1/currentConditions:lookup?key=$_apiKey',
+        'https://airquality.googleapis.com/v1/currentConditions:lookup?key=${ApiConfig.googleApiKey}',
       );
       final response = await _makeHttpRequest(
         url, 
@@ -189,7 +189,7 @@ class WeatherService {
       }
 
       final url = Uri.parse(
-        'https://airquality.googleapis.com/v1/currentConditions:lookup?key=$_apiKey',
+        'https://airquality.googleapis.com/v1/currentConditions:lookup?key=${ApiConfig.googleApiKey}',
       );
       final response = await _makeHttpRequest(
         url, 
@@ -326,7 +326,7 @@ class WeatherService {
       final double latitude = city?.latitude ?? _defaultLatitude;
       final double longitude = city?.longitude ?? _defaultLongitude;
       final hourlyUrl = Uri.parse(
-        '$_baseUrl/forecast/hours:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&hours=24&key=$_apiKey',
+        '$_baseUrl/forecast/hours:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&hours=24&key=${ApiConfig.googleApiKey}',
       );
       final hourlyResponse = await _makeHttpRequest(hourlyUrl);
       if (hourlyResponse.statusCode != 200) {
@@ -363,7 +363,7 @@ class WeatherService {
       final nowDt = DateTime.now().toUtc();
       final startTime = nowDt.subtract(const Duration(hours: 24));
       final url = Uri.parse(
-        '$_baseUrl/history:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=METRIC&startTime=${startTime.toIso8601String()}&endTime=${nowDt.toIso8601String()}&key=$_apiKey',
+        '$_baseUrl/history:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=METRIC&startTime=${startTime.toIso8601String()}&endTime=${nowDt.toIso8601String()}&key=${ApiConfig.googleApiKey}',
       );
       final response = await _makeHttpRequest(url);
       if (response.statusCode != 200) {

@@ -191,7 +191,7 @@ class PrecipitationChart extends StatelessWidget {
                       right: BorderSide.none,
                     ),
                   ),
-                  extraLinesData: ExtraLinesData(
+                  extraLinesData: const ExtraLinesData(
                     horizontalLines: [],
                     verticalLines: [],
                   ),
@@ -231,8 +231,8 @@ class PrecipitationChart extends StatelessWidget {
                       isCurved: true,
                       gradient: LinearGradient(
                         colors: [
-                          Colors.amber.withOpacity(0.8),
-                          Colors.amber.withOpacity(0.4),
+                          Colors.amber.withValues(alpha: 0.8),
+                          Colors.amber.withValues(alpha: 0.4),
                         ],
                       ),
                       barWidth: 3,
@@ -244,8 +244,8 @@ class PrecipitationChart extends StatelessWidget {
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            Colors.amber.withOpacity(0.3),
-                            Colors.amber.withOpacity(0.1),
+                            Colors.amber.withValues(alpha: 0.3),
+                            Colors.amber.withValues(alpha: 0.1),
                           ],
                         ),
                       ),

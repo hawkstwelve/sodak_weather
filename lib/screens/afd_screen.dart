@@ -130,13 +130,16 @@ class _AFDScreenState extends State<AFDScreen> {
                       child: _errorMessage != null
                           ? Text(_errorMessage!, style: AppTheme.bodyMedium)
                           : SingleChildScrollView(
-                              child: Container(
+                              child: SizedBox(
                                 width: double.infinity,
-                                child: SelectableText(
-                                  _cleanAfdText(_afdText ?? 'No AFD available.'),
-                                  style: AppTheme.bodyMedium,
-                                  textAlign: TextAlign.left,
-                                  textDirection: TextDirection.ltr,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: SelectableText(
+                                    _cleanAfdText(_afdText ?? 'No AFD available.'),
+                                    style: AppTheme.bodyMedium,
+                                    textAlign: TextAlign.left,
+                                    textDirection: TextDirection.ltr,
+                                  ),
                                 ),
                               ),
                             ),

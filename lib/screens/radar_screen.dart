@@ -10,6 +10,7 @@ import '../providers/weather_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/rainviewer_api.dart';
 import '../widgets/app_drawer.dart';
+import '../config/api_config.dart';
 
 class RadarPage extends StatefulWidget {
   final String? weatherCondition;
@@ -28,10 +29,6 @@ class RadarPage extends StatefulWidget {
 }
 
 class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
-  static const String _lightOsmUrlTemplate =
-      'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=c0febc46-dcc9-448e-b5da-765b0873db13';
-  static const String _darkOsmUrlTemplate =
-      'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=c0febc46-dcc9-448e-b5da-765b0873db13';
   static const double _initialZoom = 8.5;
   static const double _minZoomLevel = 3.0;
   static const double _maxZoomLevel = 14.0;
@@ -204,8 +201,8 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     );
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final String baseMapUrl = isDark
-        ? _darkOsmUrlTemplate
-        : _lightOsmUrlTemplate;
+        ? ApiConfig.darkTileUrl
+        : ApiConfig.lightTileUrl;
     final LatLng center = LatLng(_currentCity.latitude, _currentCity.longitude);
 
     return Scaffold(
@@ -304,7 +301,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
                         return TileLayer(
                           key: ValueKey(frame.path),
                           urlTemplate: tileUrlTemplate,
-                          tileSize: 256,
+                          tileDimension: 256,
                           tileProvider: FMTCTileProvider.allStores(
                             allStoresStrategy: BrowseStoreStrategy.readUpdateCreate,
                             loadingStrategy: BrowseLoadingStrategy.cacheFirst,
@@ -345,7 +342,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     final timeStr = _formatUnixToLocal(frame.time);
 
     return Card(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       margin: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(

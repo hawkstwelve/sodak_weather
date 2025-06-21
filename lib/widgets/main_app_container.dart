@@ -46,7 +46,11 @@ class _MainAppContainerState extends State<MainAppContainer> {
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
-                onTap: () => Navigator.of(context).pop(city),
+                onTap: () {
+                  if (mounted) {
+                    Navigator.of(context).pop(city);
+                  }
+                },
               ),
             ),
           );
@@ -77,7 +81,10 @@ class _MainAppContainerState extends State<MainAppContainer> {
 
         if (selected != null && selected.name != selectedCity.name) {
           // Use the provider to update the city
-          Provider.of<WeatherProvider>(context, listen: false).setSelectedCity(selected);
+          if (mounted) {
+            // ignore: use_build_context_synchronously
+            Provider.of<WeatherProvider>(context, listen: false).setSelectedCity(selected);
+          }
         }
       },
       child: Container(

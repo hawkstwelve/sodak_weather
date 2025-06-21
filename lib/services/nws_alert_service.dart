@@ -36,8 +36,8 @@ class NwsAlertService {
   // Fetch alerts for all SD cities in parallel for better performance, with persistent cache
   static Future<List<NwsAlertFeature>> fetchAllSdcityAlerts() async {
     final prefs = await SharedPreferences.getInstance();
-    final cacheKey = 'nwsAlerts_allCities';
-    final cacheTimeKey = '${cacheKey}_time';
+    const cacheKey = 'nwsAlerts_allCities';
+    const cacheTimeKey = '${cacheKey}_time';
     final now = DateTime.now().millisecondsSinceEpoch;
 
     // Check cache
