@@ -48,7 +48,7 @@ jobs:
       - name: Create API config for build
         run: |
           mkdir -p lib/config
-          cat > lib/config/api_config.dart << 'EOF'
+          cat > lib/config/api_config.dart << EOF
           class ApiConfig {
             // API keys from GitHub Secrets
             static const String stadiaMapsApiKey = '${{ secrets.STADIA_MAPS_API_KEY }}';
