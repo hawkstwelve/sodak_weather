@@ -1,0 +1,8 @@
+# Configuration for flutter_native_splash
+flutter_native_splash:
+  color: "#FFFFFF" # Example blue background, change as needed
+  android_12:
+    image: assets/splash.png # Path to your logo image
+  android: true
+  ios: true
+  web: true

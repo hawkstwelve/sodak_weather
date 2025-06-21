@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Flutter Build APK (Performance Optimized)",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk",
+				"--release",
+				"--obfuscate",
+				"--split-debug-info=build/app/outputs/symbols"
+			],
+			"group": "build",
+			"problemMatcher": [
+				"$dart-analyzer"
+			]
+		}
+	]
+}
