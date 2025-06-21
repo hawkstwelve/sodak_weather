@@ -28,17 +28,28 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
         
+      - name: Debug secret access
+        run: |
+          echo "Testing secret access..."
+          if [ -n "${{ secrets.GOOGLE_API_KEY }}" ]; then
+            echo "GOOGLE_API_KEY is set (length: ${#GOOGLE_API_KEY})"
+          else
+            echo "GOOGLE_API_KEY is not set"
+          fi
+          if [ -n "${{ secrets.STADIA_MAPS_API_KEY }}" ]; then
+            echo "STADIA_MAPS_API_KEY is set (length: ${#STADIA_MAPS_API_KEY})"
+          else
+            echo "STADIA_MAPS_API_KEY is not set"
+          fi
+        
       - name: Create API config for build
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          STADIA_MAPS_API_KEY: ${{ secrets.STADIA_MAPS_API_KEY }}
         run: |
           mkdir -p lib/config
-          cat > lib/config/api_config.dart << EOF
+          cat > lib/config/api_config.dart << 'EOF'
           class ApiConfig {
             // API keys from GitHub Secrets
-            static const String stadiaMapsApiKey = '$STADIA_MAPS_API_KEY';
-            static const String googleApiKey = '$GOOGLE_API_KEY';
+            static const String stadiaMapsApiKey = '${{ secrets.STADIA_MAPS_API_KEY }}';
+            static const String googleApiKey = '${{ secrets.GOOGLE_API_KEY }}';
             
             // Base URLs for Stadia Maps tiles
             static String get lightTileUrl => 
