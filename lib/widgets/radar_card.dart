@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../models/sd_city.dart';
 import '../services/rainviewer_api.dart';
 import '../config/api_config.dart';
+import '../theme/app_theme.dart';
 
 class RadarCard extends StatefulWidget {
   final SDCity city;
@@ -102,7 +103,7 @@ class _RadarCardState extends State<RadarCard> {
     if (_loading) {
       return const SizedBox(
         height: 160,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor)),
       );
     }
 
@@ -193,7 +194,7 @@ class _RadarCardState extends State<RadarCard> {
             child: Container(
               color: Colors.black.withValues(alpha: 0.3),
               child: const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor),
               ),
             ),
           ),

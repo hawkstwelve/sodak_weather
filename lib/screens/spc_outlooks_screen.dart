@@ -12,11 +12,13 @@ import '../services/spc_outlook_service.dart';
 class SpcOutlooksScreen extends StatefulWidget {
   final Widget? citySelector;
   final Function(int)? onNavigate;
+  final String currentScreenId;
 
   const SpcOutlooksScreen({
     super.key,
     this.citySelector,
     this.onNavigate,
+    required this.currentScreenId,
   });
 
   @override
@@ -78,30 +80,16 @@ class _SpcOutlooksScreenState extends State<SpcOutlooksScreen> {
       drawer: AppDrawer(
         gradientColors: gradientColors,
         selectedCity: selectedCity,
-        currentScreen: 'spc_outlooks',
-        onWeatherTap: () {
-          Navigator.pop(context);
-          widget.onNavigate?.call(0);
-        },
-        onAfdTap: () {
-          Navigator.pop(context);
-          widget.onNavigate?.call(1);
-        },
-        onSpcOutlooksTap: () {
-          Navigator.pop(context);
-        },
-        onRadarTap: () {
-          Navigator.pop(context);
-          widget.onNavigate?.call(3);
-        },
+        currentScreenId: widget.currentScreenId,
+        onNavigationTap: (index) => widget.onNavigate?.call(index),
       ),
       body: _futureData == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor))
           : FutureBuilder<List<SpcOutlook>>(
               future: _futureData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
                 } else if (snapshot.hasError) {
                   return Center(
                     child: Text(
@@ -152,7 +140,7 @@ class _SpcOutlooksScreenState extends State<SpcOutlooksScreen> {
                                   outlook.imgUrl,
                                   loadingBuilder: (context, child, progress) {
                                     if (progress == null) return child;
-                                    return const Center(child: CircularProgressIndicator());
+                                    return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
                                   },
                                   errorBuilder: (context, error, stackTrace) {
                                     return const Center(child: Icon(Icons.error));

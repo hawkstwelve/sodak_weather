@@ -12,12 +12,14 @@ class AFDScreen extends StatefulWidget {
   final List<Color> gradientColors;
   final Widget? citySelector;
   final Function(int)? onNavigate;
+  final String currentScreenId;
 
   const AFDScreen({
     super.key,
     required this.gradientColors,
     this.citySelector,
     this.onNavigate,
+    required this.currentScreenId,
   });
 
   @override
@@ -99,25 +101,11 @@ class _AFDScreenState extends State<AFDScreen> {
       drawer: AppDrawer(
         gradientColors: widget.gradientColors,
         selectedCity: selectedCity,
-        currentScreen: 'afd',
-        onWeatherTap: () {
-          Navigator.pop(context);
-          widget.onNavigate?.call(0);
-        },
-        onAfdTap: () {
-          Navigator.pop(context);
-        },
-        onSpcOutlooksTap: () {
-          Navigator.pop(context);
-          widget.onNavigate?.call(2);
-        },
-        onRadarTap: () {
-          Navigator.pop(context);
-          widget.onNavigate?.call(3);
-        },
+        currentScreenId: widget.currentScreenId,
+        onNavigationTap: (index) => widget.onNavigate?.call(index),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor))
           : SafeArea(
               child: Center(
                 child: FractionallySizedBox(

@@ -43,7 +43,7 @@ lib/config/api_config.dart
 analysis_options.yaml
 devtools_options.yaml
 pubspec.lock
-/reference/
+/docs/
 
 # Symbolication related
 app.*.symbols

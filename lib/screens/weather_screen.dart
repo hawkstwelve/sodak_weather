@@ -33,6 +33,7 @@ const double kHourlyForecastCardHeight = 150.0;
 class WeatherPage extends StatelessWidget {
   final Widget? citySelector;
   final Function(int)? onNavigate;
+  final String currentScreenId;
 
   // Static DateFormat instances for performance optimization
   static final DateFormat _dateTimeFormatter = DateFormat('MMM d, h:mm a');
@@ -42,6 +43,7 @@ class WeatherPage extends StatelessWidget {
     super.key,
     this.citySelector,
     this.onNavigate,
+    required this.currentScreenId,
   });
 
   @override
@@ -74,20 +76,8 @@ class WeatherPage extends StatelessWidget {
                   return AppDrawer(
                     gradientColors: drawerGradientColors,
                     selectedCity: selectedCity,
-                    currentScreen: 'weather',
-                    onWeatherTap: () => Navigator.pop(context),
-                    onAfdTap: () {
-                      Navigator.pop(context);
-                      onNavigate?.call(1);
-                    },
-                    onSpcOutlooksTap: () {
-                      Navigator.pop(context);
-                      onNavigate?.call(2);
-                    },
-                    onRadarTap: () {
-                      Navigator.pop(context);
-                      onNavigate?.call(3);
-                    },
+                    currentScreenId: currentScreenId,
+                    onNavigationTap: (index) => onNavigate?.call(index),
                   );
                 },
               ),
@@ -110,7 +100,7 @@ class WeatherPage extends StatelessWidget {
           selector: (context, provider) => provider.weatherData,
           builder: (context, weatherData, child) {
             if (isLoading) {
-              return const Center(child: CircularProgressIndicator(color: AppTheme.primaryMedium));
+              return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
             }
 
             return Selector<WeatherProvider, String?>(
@@ -317,7 +307,11 @@ class WeatherPage extends StatelessWidget {
                 _buildDetailItem(
                   const BoxedIcon(WeatherIcons.strong_wind, color: AppTheme.textLight, size: 28),
                   'Wind',
-                  '${conditions.windSpeedMph?.round() ?? 'N/A'} mph',
+                  WeatherUtils.formatWind(
+                    windDirection: conditions.windDirection,
+                    windSpeedMph: conditions.windSpeedMph,
+                    windGustMph: conditions.windGustMph,
+                  ),
                 ),
               ],
               [
@@ -471,8 +465,6 @@ class WeatherPage extends StatelessWidget {
           builder: (context, weatherData, child) {
             return PrecipitationChart(
               hourlyForecast: hourlyForecast,
-              sunrise: weatherData.sunrise,
-              sunset: weatherData.sunset,
               useBlur: false,
             );
           },
@@ -561,7 +553,11 @@ class WeatherPage extends StatelessWidget {
           const SizedBox(height: 6),
           Text(label, style: AppTheme.bodyBold),
           const SizedBox(height: 2),
-          Text(value, style: AppTheme.bodyBold),
+          Text(
+            value, 
+            style: AppTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -585,6 +581,7 @@ class WeatherPage extends StatelessWidget {
                     builder: (context) => RadarPage(
                       weatherCondition: condition,
                       citySelector: citySelector,
+                      currentScreenId: 'radar',
                     ),
                   ),
                 );

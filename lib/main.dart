@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_core/core.dart';
 import 'providers/weather_provider.dart';
+import 'providers/location_provider.dart';
 import 'widgets/main_app_container.dart';
 import 'theme/app_theme.dart';
+import 'config/api_config.dart';
 
 Future<void> main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
   await FMTCObjectBoxBackend().initialise();
+
+  // Register SyncFusion license if available
+  if (ApiConfig.hasValidSyncfusionLicense) {
+    SyncfusionLicense.registerLicense(ApiConfig.syncfusionLicenseKey);
+  }
 
   // Set status bar to transparent so gradient shows through
   SystemChrome.setSystemUIOverlayStyle(
@@ -39,7 +47,14 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProxyProvider<LocationProvider, WeatherProvider>(
+          create: (_) => WeatherProvider(),
+          update: (_, locationProvider, weatherProvider) {
+            weatherProvider?.setLocationProvider(locationProvider);
+            return weatherProvider ?? WeatherProvider();
+          },
+        ),
       ],
       child: const MyApp(),
     ),

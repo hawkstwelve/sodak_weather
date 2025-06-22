@@ -108,10 +108,16 @@ class CurrentConditions {
     return temperature;
   }
 
-  // Convert meters per second to miles per hour
+  // Return wind speed in mph (API already returns mph when using imperial units)
   double? get windSpeedMph {
     if (windSpeed == null) return null;
-    return windSpeed! * 2.237;
+    return windSpeed!; // No conversion needed - API returns mph when unitsSystem=IMPERIAL
+  }
+
+  // Return wind gust in mph (API already returns mph when using imperial units)
+  double? get windGustMph {
+    if (windGust == null) return null;
+    return windGust!; // No conversion needed - API returns mph when unitsSystem=IMPERIAL
   }
 
   // Convert meters to miles

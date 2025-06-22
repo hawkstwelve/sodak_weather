@@ -44,6 +44,11 @@ jobs:
           else
             echo "STADIA_MAPS_API_KEY is not set"
           fi
+          if [ -n "${{ secrets.SYNCFUSION_LICENSE_KEY }}" ]; then
+            echo "SYNCFUSION_LICENSE_KEY is set (length: ${#SYNCFUSION_LICENSE_KEY})"
+          else
+            echo "SYNCFUSION_LICENSE_KEY is not set"
+          fi
         
       - name: Create API config for build
         run: |
@@ -53,6 +58,10 @@ jobs:
             // API keys from GitHub Secrets
             static const String stadiaMapsApiKey = '${{ secrets.STADIA_MAPS_API_KEY }}';
             static const String googleApiKey = '${{ secrets.GOOGLE_API_KEY }}';
+            static const String syncfusionLicenseKey = '${{ secrets.SYNCFUSION_LICENSE_KEY }}';
+            
+            // Check if a valid SyncFusion license key is configured
+            static bool get hasValidSyncfusionLicense => syncfusionLicenseKey.isNotEmpty;
             
             // Base URLs for Stadia Maps tiles
             static String get lightTileUrl => 

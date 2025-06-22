@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/sd_city.dart';
+import '../config/navigation_config.dart';
 
 class AppDrawer extends StatelessWidget {
   final List<Color> gradientColors;
   final SDCity selectedCity;
-  final VoidCallback onWeatherTap;
-  final VoidCallback onAfdTap;
-  final VoidCallback onSpcOutlooksTap;
-  final VoidCallback? onRadarTap;
-  final String currentScreen;
+  final String currentScreenId;
+  final Function(int) onNavigationTap;
 
   const AppDrawer({
     Key? key,
     required this.gradientColors,
     required this.selectedCity,
-    required this.onWeatherTap,
-    required this.onAfdTap,
-    required this.onSpcOutlooksTap,
-    this.onRadarTap,
-    required this.currentScreen,
+    required this.currentScreenId,
+    required this.onNavigationTap,
   }) : super(key: key);
 
   @override
@@ -78,36 +73,12 @@ class AppDrawer extends StatelessWidget {
                 child: Divider(color: Colors.white70, thickness: 1.2),
               ),
               const SizedBox(height: 8),
-              // Continue with the rest of your drawer items
-              // Use optimized navigation items
-              _buildNavigationItem(
+              // Generate navigation items dynamically from configuration
+              ...NavigationConfig.items.map((item) => _buildNavigationItem(
                 context,
-                'Weather',
-                Icons.cloud,
-                currentScreen == 'weather',
-                onWeatherTap,
-              ),
-              _buildNavigationItem(
-                context,
-                'Area Forecast Discussion',
-                Icons.article,
-                currentScreen == 'afd',
-                onAfdTap,
-              ),
-              _buildNavigationItem(
-                context,
-                'Storm Outlooks',
-                Icons.warning,
-                currentScreen == 'spc_outlooks',
-                onSpcOutlooksTap,
-              ),
-              _buildNavigationItem(
-                context,
-                'Radar',
-                Icons.radar,
-                currentScreen == 'radar',
-                onRadarTap,
-              ),
+                item,
+                item.screenId == currentScreenId,
+              )),
             ],
           ),
         ),
@@ -118,10 +89,8 @@ class AppDrawer extends StatelessWidget {
   // Optimized navigation item with simpler rendering
   Widget _buildNavigationItem(
     BuildContext context,
-    String title,
-    IconData icon,
+    NavigationItem item,
     bool isSelected,
-    VoidCallback? onTap,
   ) {
     // Use a simpler container instead of GlassCard for menu items
     return Padding(
@@ -132,16 +101,19 @@ class AppDrawer extends StatelessWidget {
             : Colors.transparent, // 20% opacity white
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
+          onTap: isSelected ? null : () {
+            Navigator.pop(context);
+            onNavigationTap(item.index);
+          },
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                Icon(icon, color: AppTheme.textLight),
+                Icon(item.icon, color: AppTheme.textLight),
                 const SizedBox(width: 16),
                 Text(
-                  title,
+                  item.title,
                   style: TextStyle(
                     color: AppTheme.textLight,
                     fontSize: 16,

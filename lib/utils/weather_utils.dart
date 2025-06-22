@@ -145,4 +145,47 @@ class WeatherUtils {
 
     return forecastByDate;
   }
+
+  /// Convert wind direction degrees to cardinal direction (N, NE, E, SE, S, SW, W, NW)
+  static String getWindDirection(int? degrees) {
+    if (degrees == null) return '';
+    
+    // Normalize degrees to 0-360 range
+    final normalized = degrees % 360;
+    
+    // Define cardinal directions with their degree ranges
+    if (normalized >= 337.5 || normalized < 22.5) return 'N';
+    if (normalized >= 22.5 && normalized < 67.5) return 'NE';
+    if (normalized >= 67.5 && normalized < 112.5) return 'E';
+    if (normalized >= 112.5 && normalized < 157.5) return 'SE';
+    if (normalized >= 157.5 && normalized < 202.5) return 'S';
+    if (normalized >= 202.5 && normalized < 247.5) return 'SW';
+    if (normalized >= 247.5 && normalized < 292.5) return 'W';
+    if (normalized >= 292.5 && normalized < 337.5) return 'NW';
+    
+    return 'N'; // Fallback
+  }
+
+  /// Format wind information with direction, speed, and gusts
+  /// Returns format: "NW 10\nG 20 mph" or "NW 10 mph" if no gusts
+  static String formatWind({
+    required int? windDirection,
+    required double? windSpeedMph,
+    required double? windGustMph,
+  }) {
+    final direction = getWindDirection(windDirection);
+    final speed = windSpeedMph?.round();
+    
+    if (speed == null) return 'N/A';
+    
+    final baseString = '$direction $speed';
+    
+    // Add gust information if available and different from wind speed
+    if (windGustMph != null && windGustMph > (windSpeedMph ?? 0)) {
+      final gust = windGustMph.round();
+      return '$baseString\nG $gust mph';
+    }
+    
+    return '$baseString mph';
+  }
 }

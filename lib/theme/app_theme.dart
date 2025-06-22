@@ -38,6 +38,9 @@ class AppTheme {
   static const Color glassCardColor = Color(0x2EFFFFFF); // white with 18% opacity
   static const Color glassShadowColor = Color(0x142196F3); // blue with 8% opacity
 
+  // Loading indicator color - soft transparent white for glassmorphism
+  static const Color loadingIndicatorColor = Color(0x4DFFFFFF); // white with 30% opacity
+
   // Icon colors
   static const Color iconDay = Color(0xFFFFF176); // light yellow
   static const Color iconNight = Color(0xFF90CAF9); // light blue

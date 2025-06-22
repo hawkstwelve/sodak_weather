@@ -1,79 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/hourly_forecast.dart';
 import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
 
-class PrecipitationChart extends StatelessWidget {
+class PrecipitationChart extends StatefulWidget {
   final List<HourlyForecast> hourlyForecast;
-  final DateTime? sunrise;
-  final DateTime? sunset;
   final bool useBlur;
 
   const PrecipitationChart({
     super.key,
     required this.hourlyForecast,
-    this.sunrise,
-    this.sunset,
     this.useBlur = false,
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (hourlyForecast.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  State<PrecipitationChart> createState() => _PrecipitationChartState();
+}
 
-    // Filter to next 24 hours and sort by time
+class _PrecipitationChartState extends State<PrecipitationChart> {
+  late List<_ChartData> _chartData;
+  late TrackballBehavior _trackballBehavior;
+  late double _maxAmount;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareChartData();
+    _trackballBehavior = TrackballBehavior(
+      enable: true,
+      activationMode: ActivationMode.longPress,
+      tooltipDisplayMode: TrackballDisplayMode.groupAllPoints,
+      tooltipSettings: const InteractiveTooltip(
+        format: 'point.y',
+        borderColor: Colors.white,
+        borderWidth: 1,
+        color: Color(0x80FFFFFF),
+        textStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        canShowMarker: true,
+      ),
+    );
+  }
+
+  void _prepareChartData() {
     final now = DateTime.now();
-    final filteredForecast = hourlyForecast
-        .where((forecast) => forecast.time.toLocal().isAfter(now.subtract(const Duration(minutes: 30))))
+    final filteredForecast = widget.hourlyForecast
+        .where((forecast) =>
+            forecast.time.toLocal().isAfter(now.subtract(const Duration(minutes: 30))))
         .take(24)
         .toList()
       ..sort((a, b) => a.time.toLocal().compareTo(b.time.toLocal()));
 
-    if (filteredForecast.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    // Prepare data for the chart
-    final List<FlSpot> probabilitySpots = [];
-    final List<FlSpot> amountSpots = [];
-    final List<String> timeLabels = [];
-
-    for (int i = 0; i < filteredForecast.length; i++) {
-      final forecast = filteredForecast[i];
-      final time = forecast.time.toLocal();
-      
-      // Add probability data (0-100 scale)
-      final probability = forecast.precipProbability ?? 0;
-      probabilitySpots.add(FlSpot(i.toDouble(), probability.toDouble()));
-      
-      // Add amount data (convert to inches if needed)
+    _chartData = filteredForecast.map((forecast) {
       double amount = 0.0;
       if (forecast.precipAmount != null) {
         amount = forecast.precipAmount!;
-        // Convert mm to inches if needed
         if (forecast.precipUnit == 'MM') {
-          amount = amount / 25.4;
+          amount /= 25.4;
         }
       }
-      amountSpots.add(FlSpot(i.toDouble(), amount));
-      
-      // Add time labels (every 6 hours)
-      if (i % 6 == 0 || i == filteredForecast.length - 1) {
-        timeLabels.add(DateFormat('ha').format(time));
-      } else {
-        timeLabels.add('');
-      }
+      return _ChartData(
+        forecast.time.toLocal(),
+        (forecast.precipProbability ?? 0).toDouble(),
+        amount,
+      );
+    }).toList();
+
+    final maxVal = _chartData.map((d) => d.amount ?? 0).reduce((a, b) => a > b ? a : b);
+    if (maxVal < 0.1) {
+      _maxAmount = 0.5;
+    } else {
+      _maxAmount = (maxVal * 10).ceil() / 10.0 + 0.1;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_chartData.isEmpty) {
+      return const SizedBox.shrink();
     }
 
-    // Calculate max amount for right axis scaling
-    final maxAmount = _getMaxAmount(amountSpots);
-
     return GlassCard(
-      useBlur: useBlur,
+      useBlur: widget.useBlur,
       opacity: 0.2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -93,164 +106,64 @@ class PrecipitationChart extends StatelessWidget {
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: 25,
-                    getDrawingHorizontalLine: (value) {
-                      return FlLine(
-                        color: AppTheme.textLight.withValues(alpha: 0.1),
-                        strokeWidth: 1,
-                      );
-                    },
+              child: SfCartesianChart(
+                plotAreaBorderColor: Colors.white,
+                plotAreaBorderWidth: 1,
+                backgroundColor: Colors.transparent,
+                primaryXAxis: CategoryAxis(
+                  majorGridLines: const MajorGridLines(width: 0),
+                  axisLine: const AxisLine(width: 0),
+                  majorTickLines: const MajorTickLines(size: 0),
+                  labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
+                ),
+                primaryYAxis: NumericAxis(
+                  name: 'probability',
+                  minimum: 0,
+                  maximum: 100,
+                  interval: 25,
+                  axisLine: const AxisLine(width: 1, color: Colors.white),
+                  majorTickLines: const MajorTickLines(
+                    size: 5,
+                    color: Colors.white,
                   ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 25,
-                        reservedSize: 40,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          if (value == 0) {
-                            return const Text('');
-                          }
-                          final amountValue = (value / 100) * maxAmount;
-                          return SideTitleWidget(
-                            axisSide: meta.axisSide,
-                            child: Text(
-                              '${amountValue.toStringAsFixed(2)}"',
-                              style: AppTheme.bodySmall.copyWith(
-                                color: AppTheme.textLight.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        interval: 6,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          if (value.toInt() < timeLabels.length) {
-                            return SideTitleWidget(
-                              axisSide: meta.axisSide,
-                              child: Text(
-                                timeLabels[value.toInt()],
-                                style: AppTheme.bodySmall.copyWith(
-                                  color: AppTheme.textLight.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            );
-                          }
-                          return const Text('');
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 25,
-                        reservedSize: 40,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          return SideTitleWidget(
-                            axisSide: meta.axisSide,
-                            child: Text(
-                              '${value.toInt()}%',
-                              style: AppTheme.bodySmall.copyWith(
-                                color: AppTheme.textLight.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                  majorGridLines: const MajorGridLines(
+                    width: 1,
+                    color: Color(0x40FFFFFF),
                   ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border(
-                      left: BorderSide(
-                        color: AppTheme.textLight.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      top: BorderSide(
-                        color: AppTheme.textLight.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      bottom: BorderSide(
-                        color: AppTheme.textLight.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      right: BorderSide.none,
+                  minorTickLines: const MinorTickLines(size: 0),
+                  minorGridLines: const MinorGridLines(width: 0),
+                  labelFormat: '{value}%',
+                  labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
+                ),
+                axes: <ChartAxis>[
+                  NumericAxis(
+                    name: 'amount',
+                    opposedPosition: true,
+                    minimum: 0,
+                    maximum: _maxAmount,
+                    interval: _maxAmount / 4,
+                    axisLine: const AxisLine(width: 1, color: Colors.white),
+                    majorTickLines: const MajorTickLines(
+                      size: 5,
+                      color: Colors.white,
                     ),
+                    majorGridLines: const MajorGridLines(
+                      width: 1,
+                      color: Color(0x40FFFFFF),
+                    ),
+                    minorTickLines: const MinorTickLines(size: 0),
+                    minorGridLines: const MinorGridLines(width: 0),
+                    labelFormat: '{value} in',
+                    labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
                   ),
-                  extraLinesData: const ExtraLinesData(
-                    horizontalLines: [],
-                    verticalLines: [],
-                  ),
-                  minX: 0,
-                  maxX: (filteredForecast.length - 1).toDouble(),
-                  minY: 0,
-                  maxY: 100,
-                  lineBarsData: [
-                    // Probability line (left axis)
-                    LineChartBarData(
-                      spots: probabilitySpots,
-                      isCurved: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.blue.withValues(alpha: 0.8),
-                          Colors.blue.withValues(alpha: 0.4),
-                        ],
-                      ),
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(
-                        show: false,
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blue.withValues(alpha: 0.3),
-                            Colors.blue.withValues(alpha: 0.1),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Amount line (right axis)
-                    LineChartBarData(
-                      spots: amountSpots.map((spot) => FlSpot(spot.x, (spot.y / maxAmount) * 100)).toList(),
-                      isCurved: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.amber.withValues(alpha: 0.8),
-                          Colors.amber.withValues(alpha: 0.4),
-                        ],
-                      ),
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(
-                        show: false,
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.amber.withValues(alpha: 0.3),
-                            Colors.amber.withValues(alpha: 0.1),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                ],
+                series: _getSeries(),
+                trackballBehavior: _trackballBehavior,
+                enableAxisAnimation: true,
+                zoomPanBehavior: ZoomPanBehavior(
+                  enablePinching: true,
+                  enablePanning: true,
+                  enableDoubleTapZooming: true,
                 ),
               ),
             ),
@@ -268,6 +181,41 @@ class PrecipitationChart extends StatelessWidget {
     );
   }
 
+  List<CartesianSeries<_ChartData, String>> _getSeries() {
+    return <CartesianSeries<_ChartData, String>>[
+      SplineAreaSeries<_ChartData, String>(
+        dataSource: _chartData,
+        xValueMapper: (_ChartData data, _) => DateFormat('ha').format(data.time),
+        yValueMapper: (_ChartData data, _) => data.probability,
+        yAxisName: 'probability',
+        name: 'Probability',
+        color: Colors.blue.withOpacity(0.3),
+        borderColor: Colors.blue,
+        borderWidth: 2,
+        animationDuration: 1000,
+        selectionBehavior: SelectionBehavior(
+          enable: true,
+          selectedColor: Colors.blue.withOpacity(0.5),
+        ),
+      ),
+      SplineAreaSeries<_ChartData, String>(
+        dataSource: _chartData,
+        xValueMapper: (_ChartData data, _) => DateFormat('ha').format(data.time),
+        yValueMapper: (_ChartData data, _) => data.amount,
+        yAxisName: 'amount',
+        name: 'Amount',
+        color: Colors.amber.withOpacity(0.3),
+        borderColor: Colors.amber,
+        borderWidth: 2,
+        animationDuration: 1000,
+        selectionBehavior: SelectionBehavior(
+          enable: true,
+          selectedColor: Colors.amber.withOpacity(0.5),
+        ),
+      ),
+    ];
+  }
+
   Widget _buildLegendItem(String label, Color color) {
     return Row(
       children: [
@@ -282,24 +230,16 @@ class PrecipitationChart extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: AppTheme.bodySmall.copyWith(
-            color: AppTheme.textLight.withValues(alpha: 0.8),
-          ),
+          style: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
         ),
       ],
     );
   }
+}
 
-  double _getMaxAmount(List<FlSpot> spots) {
-    if (spots.isEmpty) return 0.5;
-    final maxVal = spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
-    
-    // If max precipitation is very low, set a reasonable default for the axis.
-    if (maxVal < 0.1) {
-      return 0.5;
-    }
-    
-    // Otherwise, round up to the next 0.1 and add a little padding.
-    return (maxVal * 10).ceil() / 10.0 + 0.1;
-  }
+class _ChartData {
+  _ChartData(this.time, this.probability, this.amount);
+  final DateTime time;
+  final double? probability;
+  final double? amount;
 } 

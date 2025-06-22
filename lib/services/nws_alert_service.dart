@@ -33,6 +33,31 @@ class NwsAlertService {
     return null;
   }
 
+  // Fetch alerts for specific coordinates with persistent cache
+  static Future<NwsAlertCollection?> fetchAlertsForCoordinates(double latitude, double longitude) async {
+    final prefs = await SharedPreferences.getInstance();
+    final coordKey = '${latitude}_$longitude';
+    final cacheKey = 'nwsAlerts_$coordKey';
+    final cacheTimeKey = '${cacheKey}_time';
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Check cache
+    final cached = prefs.getString(cacheKey);
+    final cachedTime = prefs.getInt(cacheTimeKey);
+    if (cached != null && cachedTime != null && now - cachedTime < cacheDurationMs) {
+      return nwsAlertCollectionFromJson(cached);
+    }
+
+    final url = Uri.parse('$baseUrl?point=$latitude,$longitude');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      prefs.setString(cacheKey, response.body);
+      prefs.setInt(cacheTimeKey, now);
+      return nwsAlertCollectionFromJson(response.body);
+    }
+    return null;
+  }
+
   // Fetch alerts for all SD cities in parallel for better performance, with persistent cache
   static Future<List<NwsAlertFeature>> fetchAllSdcityAlerts() async {
     final prefs = await SharedPreferences.getInstance();

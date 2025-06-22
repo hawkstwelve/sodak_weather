@@ -16,11 +16,13 @@ class RadarPage extends StatefulWidget {
   final String? weatherCondition;
   final Widget? citySelector;
   final Function(int)? onNavigate;
+  final String currentScreenId;
 
   const RadarPage({
     this.weatherCondition,
     this.citySelector,
     this.onNavigate,
+    required this.currentScreenId,
     super.key,
   });
 
@@ -220,34 +222,8 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
       drawer: AppDrawer(
         gradientColors: gradientColors,
         selectedCity: _currentCity,
-        currentScreen: 'radar',
-        onWeatherTap: () {
-          Navigator.pop(context);
-          if (widget.onNavigate != null) {
-            widget.onNavigate!(0);
-          } else {
-            Navigator.of(context).pop();
-          }
-        },
-        onAfdTap: () {
-          Navigator.pop(context);
-          if (widget.onNavigate != null) {
-            widget.onNavigate!(1);
-          } else {
-            Navigator.of(context).pop();
-          }
-        },
-        onSpcOutlooksTap: () {
-          Navigator.pop(context);
-          if (widget.onNavigate != null) {
-            widget.onNavigate!(2);
-          } else {
-            Navigator.of(context).pop();
-          }
-        },
-        onRadarTap: () {
-          Navigator.pop(context);
-        },
+        currentScreenId: widget.currentScreenId,
+        onNavigationTap: (index) => widget.onNavigate?.call(index),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -263,7 +239,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
               if (_isLoadingFrames)
                 const Center(
                   key: ValueKey('radar_loading'),
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor),
                 )
               else if (_framesErrorMessage != null)
                 Center(

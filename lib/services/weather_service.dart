@@ -66,10 +66,10 @@ class WeatherService {
     }
   }
 
-  Future<Map<String, dynamic>?> getCurrentWeather({SDCity? city}) async {
+  Future<Map<String, dynamic>?> getCurrentWeather({SDCity? city, double? latitude, double? longitude}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cityKey = city?.name ?? 'default';
+      final cityKey = city?.name ?? (latitude != null && longitude != null ? '${latitude}_$longitude' : 'default');
       final cacheKey = 'currentWeather_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -82,10 +82,10 @@ class WeatherService {
       }
 
       // Google Weather API: Current Conditions
-      final double latitude = city?.latitude ?? _defaultLatitude;
-      final double longitude = city?.longitude ?? _defaultLongitude;
+      final double lat = latitude ?? city?.latitude ?? _defaultLatitude;
+      final double lon = longitude ?? city?.longitude ?? _defaultLongitude;
       final currentUrl = Uri.parse(
-        '$_baseUrl/currentConditions:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&key=${ApiConfig.googleApiKey}',
+        '$_baseUrl/currentConditions:lookup?location.latitude=$lat&location.longitude=$lon&unitsSystem=IMPERIAL&key=${ApiConfig.googleApiKey}',
       );
       final currentResponse = await _makeHttpRequest(currentUrl);
       if (currentResponse.statusCode != 200) {
@@ -96,7 +96,7 @@ class WeatherService {
 
       // Google Weather API: Forecast (10 days)
       final forecastUrl = Uri.parse(
-        '$_baseUrl/forecast/days:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&days=10&pageSize=10&key=${ApiConfig.googleApiKey}',
+        '$_baseUrl/forecast/days:lookup?location.latitude=$lat&location.longitude=$lon&unitsSystem=IMPERIAL&days=10&pageSize=10&key=${ApiConfig.googleApiKey}',
       );
       final forecastResponse = await _makeHttpRequest(forecastUrl);
       if (forecastResponse.statusCode != 200) {
@@ -232,6 +232,7 @@ class WeatherService {
     final uvIndex = current['uvIndex'];
     final precip = current['precipitation']?['qpf']?['quantity'];
     final precipUnit = current['precipitation']?['qpf']?['unit'];
+    
     return {
       'temperature': current['temperature']?['degrees'],
       'apparentTemperature': current['feelsLikeTemperature']?['degrees'],
@@ -308,10 +309,10 @@ class WeatherService {
     }
   }
 
-  Future<List<HourlyForecast>> getHourlyForecast({SDCity? city}) async {
+  Future<List<HourlyForecast>> getHourlyForecast({SDCity? city, double? latitude, double? longitude}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cityKey = city?.name ?? 'default';
+      final cityKey = city?.name ?? (latitude != null && longitude != null ? '${latitude}_$longitude' : 'default');
       final cacheKey = 'hourlyWeather_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -323,10 +324,10 @@ class WeatherService {
         return hours.map((h) => HourlyForecast.fromJson(h)).toList();
       }
 
-      final double latitude = city?.latitude ?? _defaultLatitude;
-      final double longitude = city?.longitude ?? _defaultLongitude;
+      final double lat = latitude ?? city?.latitude ?? _defaultLatitude;
+      final double lon = longitude ?? city?.longitude ?? _defaultLongitude;
       final hourlyUrl = Uri.parse(
-        '$_baseUrl/forecast/hours:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=IMPERIAL&hours=24&key=${ApiConfig.googleApiKey}',
+        '$_baseUrl/forecast/hours:lookup?location.latitude=$lat&location.longitude=$lon&unitsSystem=IMPERIAL&hours=24&key=${ApiConfig.googleApiKey}',
       );
       final hourlyResponse = await _makeHttpRequest(hourlyUrl);
       if (hourlyResponse.statusCode != 200) {
@@ -349,7 +350,7 @@ class WeatherService {
   Future<Map<String, double>?> fetch24HourPrecipitationTotal({required double latitude, required double longitude, SDCity? city}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cityKey = city?.name ?? '${latitude}_$longitude';
+      final cityKey = city?.name ?? ('${latitude}_$longitude');
       final cacheKey = 'rain24h_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
