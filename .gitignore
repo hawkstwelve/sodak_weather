@@ -20,6 +20,11 @@ migrate_working_dir/
 # API Configuration (contains real API keys)
 lib/config/api_config.dart
 
+# Firebase configuration files (contain API keys)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+
 # IntelliJ related
 *.iml
 *.ipr
