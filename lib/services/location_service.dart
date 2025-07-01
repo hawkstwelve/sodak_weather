@@ -1,5 +1,4 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter/foundation.dart';
 
 /// Service for handling location-related operations
 class LocationService {
@@ -7,10 +6,8 @@ class LocationService {
   static Future<Position?> getCurrentLocation() async {
     try {
       // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        debugPrint('Location services are disabled');
-        return null;
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        throw Exception('Location services are disabled');
       }
 
       // Check location permission
@@ -18,14 +15,12 @@ class LocationService {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          debugPrint('Location permissions are denied');
-          return null;
+          throw Exception('Location permissions are denied');
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        debugPrint('Location permissions are permanently denied');
-        return null;
+        throw Exception('Location permissions are permanently denied');
       }
 
       // Get current position
@@ -38,8 +33,7 @@ class LocationService {
 
       return position;
     } catch (e) {
-      debugPrint('Error getting location: $e');
-      return null;
+      throw Exception('Error getting location: $e');
     }
   }
 

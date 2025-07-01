@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/ui_constants.dart';
 
 /// Creates a frosted background with gradient effect
 class FrostedBackground extends StatelessWidget {
@@ -8,7 +9,7 @@ class FrostedBackground extends StatelessWidget {
 
   const FrostedBackground({
     required this.child,
-    this.gradientColors = const [Color(0x15FFFFFF), Color(0x10FFFFFF)],
+    this.gradientColors = UIConstants.frostedGradient,
     this.constraints,
     super.key,
   });

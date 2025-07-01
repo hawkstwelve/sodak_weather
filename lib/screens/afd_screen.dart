@@ -5,18 +5,15 @@ import '../models/sd_city.dart';
 import '../providers/weather_provider.dart';
 import '../services/afd_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_drawer.dart';
-import '../widgets/glass/frosted_background.dart';
+import '../constants/ui_constants.dart';
 
 class AFDScreen extends StatefulWidget {
-  final List<Color> gradientColors;
   final Widget? citySelector;
   final Function(int)? onNavigate;
   final String currentScreenId;
 
   const AFDScreen({
     super.key,
-    required this.gradientColors,
     this.citySelector,
     this.onNavigate,
     required this.currentScreenId,
@@ -71,71 +68,63 @@ class _AFDScreenState extends State<AFDScreen> {
     }
   }
 
+  Future<void> _refreshAFD() async {
+    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+    await _fetchAFD(weatherProvider.selectedCity);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get the selected city from the provider to pass to the AppDrawer
-    final selectedCity = Provider.of<WeatherProvider>(context, listen: false).selectedCity;
-    
-    return FrostedPageScaffold(
-      backgroundColor: Colors.transparent,
-      gradientColors: widget.gradientColors,
-      appBar: AppBar(
-        title: const Text(
-          'Area Forecast Discussion',
-          style: TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textLight,
+    return Selector<WeatherProvider, String?>(
+      selector: (context, provider) => provider.weatherData?.currentConditions?.textDescription,
+      builder: (context, condition, child) {
+        final gradientColors = AppTheme.getGradientForCondition(condition);
+        
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: gradientColors,
+            ),
           ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        backgroundColor: Colors.transparent,
-        foregroundColor: AppTheme.textLight,
-        elevation: 0,
-        titleSpacing: NavigationToolbar.kMiddleSpacing,
-        actions: [
-          if (widget.citySelector != null) widget.citySelector!,
-          const SizedBox(width: 8),
-        ],
-      ),
-      drawer: AppDrawer(
-        gradientColors: widget.gradientColors,
-        selectedCity: selectedCity,
-        currentScreenId: widget.currentScreenId,
-        onNavigationTap: (index) => widget.onNavigate?.call(index),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor))
-          : SafeArea(
-              child: Center(
-                child: FractionallySizedBox(
-                  widthFactor: 0.92,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: GlassContainer(
-                      useBlur: false,
-                      padding: const EdgeInsets.all(20.0),
-                      child: _errorMessage != null
-                          ? Text(_errorMessage!, style: AppTheme.bodyMedium)
-                          : SingleChildScrollView(
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: SelectableText(
-                                    _cleanAfdText(_afdText ?? 'No AFD available.'),
-                                    style: AppTheme.bodyMedium,
-                                    textAlign: TextAlign.left,
-                                    textDirection: TextDirection.ltr,
+          child: SafeArea(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor))
+                : Center(
+                    child: FractionallySizedBox(
+                      widthFactor: 0.92,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 600),
+                        child: GlassContainer(
+                          useBlur: false,
+                          padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+                          child: _errorMessage != null
+                              ? Text(_errorMessage!, style: AppTheme.bodyMedium)
+                              : RefreshIndicator(
+                                  onRefresh: _refreshAFD,
+                                  child: SingleChildScrollView(
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: SelectableText(
+                                          _cleanAfdText(_afdText ?? 'No AFD available.'),
+                                          style: AppTheme.bodyMedium,
+                                          textAlign: TextAlign.left,
+                                          textDirection: TextDirection.ltr,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
+          ),
+        );
+      },
     );
   }
 

@@ -66,6 +66,21 @@ if git tag -l | grep -q "^$TAG_NAME$"; then
     exit 1
 fi
 
+# Check for uncommitted changes and commit them
+print_status "Checking for uncommitted changes..."
+if ! git diff-index --quiet HEAD --; then
+    print_status "Found uncommitted changes. Committing them..."
+    git add .
+    git commit -m "v$VERSION: Prepare for release"
+    print_success "Changes committed successfully!"
+else
+    print_status "No uncommitted changes found."
+fi
+
+# Push changes to remote
+print_status "Pushing changes to remote..."
+git push origin main
+
 print_status "Cleaning previous builds..."
 flutter clean
 

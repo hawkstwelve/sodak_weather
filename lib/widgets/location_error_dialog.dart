@@ -3,6 +3,7 @@ import 'package:app_settings/app_settings.dart';
 import '../providers/location_provider.dart';
 import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
+import '../constants/ui_constants.dart';
 
 /// Dialog for displaying location-related errors with appropriate actions
 class LocationErrorDialog extends StatelessWidget {
@@ -26,24 +27,24 @@ class LocationErrorDialog extends StatelessWidget {
       child: GlassCard(
         useBlur: true,
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Error Icon
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(UIConstants.spacingXLarge),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(50),
+                  color: Colors.red.withValues(alpha: UIConstants.opacityVeryLow),
+                  borderRadius: BorderRadius.circular(UIConstants.iconSizeLarge),
                 ),
                 child: Icon(
                   _getErrorIcon(),
                   color: Colors.red,
-                  size: 32,
+                  size: UIConstants.iconSizeLarge,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: UIConstants.spacingXLarge),
 
               // Error Title
               Text(
@@ -54,7 +55,7 @@ class LocationErrorDialog extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: UIConstants.spacingLarge),
 
               // Error Message
               Text(
@@ -64,7 +65,7 @@ class LocationErrorDialog extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: UIConstants.spacingXXXLarge),
 
               // Action Buttons
               Row(
@@ -74,9 +75,9 @@ class LocationErrorDialog extends StatelessWidget {
                     child: TextButton(
                       onPressed: onDismiss ?? () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: UIConstants.spacingLarge),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(UIConstants.spacingLarge),
                         ),
                       ),
                       child: Text(
@@ -87,7 +88,7 @@ class LocationErrorDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: UIConstants.spacingLarge),
 
                   // Action Button
                   Expanded(
@@ -96,9 +97,9 @@ class LocationErrorDialog extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: UIConstants.spacingLarge),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(UIConstants.spacingLarge),
                         ),
                       ),
                       child: Text(

@@ -5,6 +5,11 @@ import '../models/almanac_data.dart';
 
 class AlmanacService {
   static const String _baseUrl = 'https://archive-api.open-meteo.com/v1/archive';
+  
+  // Cache to prevent repeated API calls
+  static final Map<String, AlmanacData> _cache = {};
+  static final Map<String, DateTime> _cacheTimestamps = {};
+  static const Duration _cacheDuration = Duration(hours: 24); // Cache for 24 hours since historical data doesn't change
 
   /// Fetch historical weather data for a specific location and date
   static Future<AlmanacData> fetchHistoricalData({
@@ -13,10 +18,21 @@ class AlmanacService {
     required DateTime targetDate,
     bool isMetric = false,
   }) async {
+    // Create cache key based on location and date
+    final cacheKey = '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}_${targetDate.month}_${targetDate.day}';
+    
+    // Check if we have cached data that's still valid
+    if (_cache.containsKey(cacheKey)) {
+      final timestamp = _cacheTimestamps[cacheKey];
+      if (timestamp != null && DateTime.now().difference(timestamp) < _cacheDuration) {
+        return _cache[cacheKey]!;
+      }
+    }
+
     final today = DateTime.now();
     final lastYear = today.year - 1;
-    final twentyYearsAgo = today.year - 20;
-    final startDate = DateFormat('yyyy-MM-dd').format(DateTime(twentyYearsAgo, 1, 1));
+    final tenYearsAgo = today.year - 10; // Reduced from 20 to 10 years to avoid rate limits
+    final startDate = DateFormat('yyyy-MM-dd').format(DateTime(tenYearsAgo, 1, 1));
     final endDate = DateFormat('yyyy-MM-dd').format(DateTime(lastYear, today.month, today.day));
     final tempUnit = isMetric ? 'celsius' : 'fahrenheit';
     final precipUnit = isMetric ? 'mm' : 'inch';
@@ -41,10 +57,28 @@ class AlmanacService {
         throw Exception('Incomplete historical weather data.');
       }
       
-      return _processData(data, targetDate);
+      final almanacData = _processData(data, targetDate);
+      
+      // Cache the result
+      _cache[cacheKey] = almanacData;
+      _cacheTimestamps[cacheKey] = DateTime.now();
+      
+      return almanacData;
+    } else if (response.statusCode == 429) {
+      // If we hit rate limit, try to return cached data even if expired
+      if (_cache.containsKey(cacheKey)) {
+        return _cache[cacheKey]!;
+      }
+      throw Exception('Rate limit exceeded. Please try again later.');
     } else {
       throw Exception('Failed to load historical weather data. Status: ${response.statusCode}');
     }
+  }
+
+  /// Clear the cache (useful for testing or when cache becomes too large)
+  static void clearCache() {
+    _cache.clear();
+    _cacheTimestamps.clear();
   }
 
   static AlmanacData _processData(Map<String, dynamic> dailyData, DateTime targetDate) {
@@ -110,14 +144,14 @@ class AlmanacService {
         if (!precip.isNaN) precipSum += precip;
         count++;
 
-        // Only add years within the last 10 years for the chart
-        if (date.year >= minChartYear) {
+        // Only add years within the last 10 years for the chart and if precip is a valid number
+        if (date.year >= minChartYear && !precip.isNaN) {
           recentYearsData.removeWhere((y) => y.year == date.year); // avoid duplicates
           recentYearsData.add(YearlyData(
             year: date.year,
             highTemp: maxTemp,
             lowTemp: minTemp,
-            precip: annualPrecip[date.year] ?? double.nan,
+            precip: precip,
           ));
         }
       }

@@ -9,8 +9,10 @@ import '../models/sd_city.dart';
 import '../providers/weather_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/rainviewer_api.dart';
-import '../widgets/app_drawer.dart';
 import '../config/api_config.dart';
+import '../utils/hour_utils.dart';
+import '../constants/ui_constants.dart';
+import '../constants/service_constants.dart';
 
 class RadarPage extends StatefulWidget {
   final String? weatherCondition;
@@ -31,9 +33,9 @@ class RadarPage extends StatefulWidget {
 }
 
 class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
-  static const double _initialZoom = 8.5;
-  static const double _minZoomLevel = 3.0;
-  static const double _maxZoomLevel = 14.0;
+  static const double _initialZoom = ServiceConstants.radarInitialZoom;
+  static const double _minZoomLevel = ServiceConstants.radarMinZoom;
+  static const double _maxZoomLevel = ServiceConstants.radarMaxZoom;
 
   final MapController _mapController = MapController();
   late SDCity _currentCity; // Local state to hold the city from the provider
@@ -42,13 +44,13 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
   int _currentFrameIndex = 0;
   bool _isPlaying = false;
   Timer? _animationTimer;
-  final Duration _animationSpeed = const Duration(milliseconds: 700);
+  final Duration _animationSpeed = UIConstants.animationSlow;
   bool _isLoadingFrames = true;
   String? _framesErrorMessage;
-  double _radarOpacity = 0.7;
+  double _radarOpacity = ServiceConstants.radarOpacity;
   final DateFormat _frameTimeFormatter = DateFormat('MMM d, h:mm a');
   Timer? _refreshDataTimer;
-  final Duration _refreshInterval = const Duration(minutes: 5);
+  final Duration _refreshInterval = ServiceConstants.weatherRefreshInterval;
 
   @override
   void initState() {
@@ -129,7 +131,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     try {
       final radarData = await RainViewerApi.fetchRadarData();
       
-      if (radarData != null && radarData.host != null && radarData.past.isNotEmpty) {
+      if (radarData.host != null && radarData.past.isNotEmpty) {
         if (mounted) {
           setState(() {
             _pastRadarFrames = radarData.past;
@@ -201,112 +203,148 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     final List<Color> gradientColors = AppTheme.getGradientForCondition(
       widget.weatherCondition,
     );
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final String baseMapUrl = isDark
+    
+    return _buildMainContainer(
+      gradientColors: gradientColors,
+      child: _buildRadarContent(context),
+    );
+  }
+
+  /// Builds the main container with gradient background
+  Widget _buildMainContainer({
+    required List<Color> gradientColors,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: gradientColors,
+        ),
+      ),
+      child: SafeArea(child: child),
+    );
+  }
+
+  /// Builds the main radar content with map and controls
+  Widget _buildRadarContent(BuildContext context) {
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadRadarData,
+          child: _buildMapSection(context),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _buildControls(context),
+        ),
+      ],
+    );
+  }
+
+  /// Builds the map section with loading, error, or map states
+  Widget _buildMapSection(BuildContext context) {
+    if (_isLoadingFrames) {
+      return _buildLoadingIndicator();
+    }
+    
+    if (_framesErrorMessage != null) {
+      return _buildErrorWidget();
+    }
+    
+    return _buildMapWidget(context);
+  }
+
+  /// Builds the loading indicator
+  Widget _buildLoadingIndicator() {
+    return const Center(
+      key: ValueKey('radar_loading'),
+      child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor),
+    );
+  }
+
+  /// Builds the error widget
+  Widget _buildErrorWidget() {
+    return Center(
+      key: const ValueKey('radar_error'),
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+        child: Text(
+          _framesErrorMessage!,
+          style: const TextStyle(color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  /// Builds the main map widget with tiles and radar layers
+  Widget _buildMapWidget(BuildContext context) {
+    final weatherProvider = Provider.of<WeatherProvider>(context);
+    final sunrise = weatherProvider.weatherData?.sunrise;
+    final sunset = weatherProvider.weatherData?.sunset;
+    
+    final isNight = isCurrentlyNight(sunrise, sunset);
+    final String baseMapUrl = isNight
         ? ApiConfig.darkTileUrl
         : ApiConfig.lightTileUrl;
     final LatLng center = LatLng(_currentCity.latitude, _currentCity.longitude);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text('${_currentCity.name} Radar'),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          if (widget.citySelector != null) widget.citySelector!,
-          const SizedBox(width: 8),
-        ],
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: center,
+        initialZoom: _initialZoom,
+        minZoom: _minZoomLevel,
+        maxZoom: _maxZoomLevel,
       ),
-      drawer: AppDrawer(
-        gradientColors: gradientColors,
-        selectedCity: _currentCity,
-        currentScreenId: widget.currentScreenId,
-        onNavigationTap: (index) => widget.onNavigate?.call(index),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: gradientColors,
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              if (_isLoadingFrames)
-                const Center(
-                  key: ValueKey('radar_loading'),
-                  child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor),
-                )
-              else if (_framesErrorMessage != null)
-                Center(
-                  key: const ValueKey('radar_error'),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _framesErrorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              else
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: center,
-                    initialZoom: _initialZoom,
-                    minZoom: _minZoomLevel,
-                    maxZoom: _maxZoomLevel,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: baseMapUrl,
-                      userAgentPackageName: 'com.example.sodak_weather',
-                      retinaMode: RetinaMode.isHighDensity(context),
-                    ),
-                    if (_pastRadarFrames.isNotEmpty && _rainviewerHost != null)
-                      ..._pastRadarFrames.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final frame = entry.value;
-                        final tileUrlTemplate =
-                            '$_rainviewerHost${frame.path}/256/{z}/{x}/{y}/4/1_1.png';
-                        return TileLayer(
-                          key: ValueKey(frame.path),
-                          urlTemplate: tileUrlTemplate,
-                          tileDimension: 256,
-                          tileProvider: FMTCTileProvider.allStores(
-                            allStoresStrategy: BrowseStoreStrategy.readUpdateCreate,
-                            loadingStrategy: BrowseLoadingStrategy.cacheFirst,
-                          ),
-                          tileBuilder: (context, tileWidget, tile) {
-                            if (index == _currentFrameIndex) {
-                              return Opacity(
-                                opacity: _radarOpacity,
-                                child: tileWidget,
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                          userAgentPackageName: 'com.example.sodak_weather',
-                        );
-                      }).toList()
-                  ],
-                ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildControls(context),
-              ),
-            ],
-          ),
-        ),
-      ),
+      children: [
+        _buildBaseMapLayer(baseMapUrl),
+        if (_pastRadarFrames.isNotEmpty && _rainviewerHost != null)
+          ..._buildRadarLayers(),
+      ],
     );
+  }
+
+  /// Builds the base map tile layer
+  Widget _buildBaseMapLayer(String baseMapUrl) {
+    return TileLayer(
+      urlTemplate: baseMapUrl,
+      userAgentPackageName: 'com.example.sodak_weather',
+      retinaMode: RetinaMode.isHighDensity(context),
+    );
+  }
+
+  /// Builds the radar overlay layers
+  List<Widget> _buildRadarLayers() {
+    return _pastRadarFrames.asMap().entries.map((entry) {
+      final index = entry.key;
+      final frame = entry.value;
+      final tileUrlTemplate =
+          '$_rainviewerHost${frame.path}/256/{z}/{x}/{y}/4/1_1.png';
+      return TileLayer(
+        key: ValueKey(frame.path),
+        urlTemplate: tileUrlTemplate,
+        tileDimension: 256,
+        tileProvider: FMTCTileProvider.allStores(
+          allStoresStrategy: BrowseStoreStrategy.readUpdateCreate,
+          loadingStrategy: BrowseLoadingStrategy.cacheFirst,
+        ),
+        tileBuilder: (context, tileWidget, tile) {
+          if (index == _currentFrameIndex) {
+            return Opacity(
+              opacity: _radarOpacity,
+              child: tileWidget,
+            );
+          }
+          return const SizedBox.shrink();
+        },
+        userAgentPackageName: 'com.example.sodak_weather',
+      );
+    }).toList();
   }
 
   Widget _buildControls(BuildContext context) {
@@ -319,63 +357,94 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
 
     return Card(
       color: Colors.black.withValues(alpha: 0.7),
-      margin: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.all(UIConstants.spacingXLarge),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(UIConstants.spacingXLarge)),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(UIConstants.spacingLarge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                  ),
-                  onPressed: _isPlaying ? _pauseAnimation : _playAnimation,
-                ),
-                Expanded(
-                  child: Slider(
-                    value: _currentFrameIndex.toDouble(),
-                    min: 0,
-                    max: (_pastRadarFrames.length - 1).toDouble(),
-                    divisions: _pastRadarFrames.length > 1
-                        ? _pastRadarFrames.length - 1
-                        : null,
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white30,
-                    onChanged: _onSliderChanged,
-                  ),
-                ),
-                Text(
-                  timeStr,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                const Icon(Icons.opacity, color: Colors.white),
-                Expanded(
-                  child: Slider(
-                    value: _radarOpacity,
-                    min: 0.1,
-                    max: 1.0,
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white30,
-                    onChanged: (v) => setState(() => _radarOpacity = v),
-                  ),
-                ),
-                Text(
-                  '${(_radarOpacity * 100).round()}%',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
+            _buildAnimationControls(timeStr),
+            _buildOpacityControls(),
           ],
         ),
       ),
+    );
+  }
+
+  /// Builds the animation controls (play/pause, slider, time)
+  Widget _buildAnimationControls(String timeStr) {
+    return Row(
+      children: [
+        _buildPlayPauseButton(),
+        Expanded(child: _buildFrameSlider()),
+        _buildTimeDisplay(timeStr),
+      ],
+    );
+  }
+
+  /// Builds the play/pause button
+  Widget _buildPlayPauseButton() {
+    return IconButton(
+      icon: Icon(
+        _isPlaying ? Icons.pause : Icons.play_arrow,
+        color: Colors.white,
+      ),
+      onPressed: _isPlaying ? _pauseAnimation : _playAnimation,
+    );
+  }
+
+  /// Builds the frame slider
+  Widget _buildFrameSlider() {
+    return Slider(
+      value: _currentFrameIndex.toDouble(),
+      min: 0,
+      max: (_pastRadarFrames.length - 1).toDouble(),
+      divisions: _pastRadarFrames.length > 1
+          ? _pastRadarFrames.length - 1
+          : null,
+      activeColor: Colors.white,
+      inactiveColor: Colors.white30,
+      onChanged: _onSliderChanged,
+    );
+  }
+
+  /// Builds the time display
+  Widget _buildTimeDisplay(String timeStr) {
+    return Text(
+      timeStr,
+      style: const TextStyle(color: Colors.white, fontSize: UIConstants.iconSizeSmall),
+    );
+  }
+
+  /// Builds the opacity controls
+  Widget _buildOpacityControls() {
+    return Row(
+      children: [
+        const Icon(Icons.opacity, color: Colors.white),
+        Expanded(child: _buildOpacitySlider()),
+        _buildOpacityDisplay(),
+      ],
+    );
+  }
+
+  /// Builds the opacity slider
+  Widget _buildOpacitySlider() {
+    return Slider(
+      value: _radarOpacity,
+      min: 0.1,
+      max: 1.0,
+      activeColor: Colors.white,
+      inactiveColor: Colors.white30,
+      onChanged: (v) => setState(() => _radarOpacity = v),
+    );
+  }
+
+  /// Builds the opacity percentage display
+  Widget _buildOpacityDisplay() {
+    return Text(
+      '${(_radarOpacity * 100).round()}%',
+      style: const TextStyle(color: Colors.white),
     );
   }
 }

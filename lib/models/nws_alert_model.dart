@@ -140,3 +140,44 @@ class AlertProperties {
     "instruction": instruction,
   };
 }
+
+class NWSAlert {
+  final String? id;
+  final String? type;
+  final AlertProperties? properties;
+  final DateTime? notifiedAt;
+  final bool read;
+  final List<String>? deliveredToDevices;
+
+  NWSAlert({
+    this.id,
+    this.type,
+    this.properties,
+    this.notifiedAt,
+    this.read = false,
+    this.deliveredToDevices,
+  });
+
+  factory NWSAlert.fromJson(Map<String, dynamic> json) =>
+      NWSAlert(
+        id: json["id"],
+        type: json["type"],
+        properties: json["properties"] == null
+            ? null
+            : AlertProperties.fromJson(json["properties"]),
+        notifiedAt: json['notifiedAt'] != null ? DateTime.parse(json['notifiedAt']) : null,
+        read: json['read'] ?? false,
+        deliveredToDevices: json['deliveredToDevices'] != null
+            ? List<String>.from(json['deliveredToDevices'])
+            : null,
+      );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "type": type,
+    "properties": properties?.toJson(),
+    "notifiedAt": notifiedAt?.toIso8601String(),
+    "read": read,
+    "deliveredToDevices": deliveredToDevices,
+  };
+}

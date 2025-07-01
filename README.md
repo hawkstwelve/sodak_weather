@@ -18,6 +18,36 @@ A beautiful, performance-optimized weather application for South Dakota built wi
 - **Multiple Locations**: Support for major South Dakota cities
 - **Beautiful UI**: Modern, glassmorphic interface with dynamic backgrounds based on weather conditions
 - **Performance Optimized**: Designed for smooth performance on all devices
+- **Weather Forecasts**: Get accurate weather forecasts for South Dakota locations
+- **Historical Data**: Access to historical weather information
+- **Location Services**: GPS-based weather data or manual city selection
+- **Onboarding Flow**: User-friendly introduction screens for first-time users
+
+## Onboarding Flow
+
+The app includes a comprehensive onboarding experience that guides new users through:
+
+1. **Welcome Screen**: Introduction to the app and its features
+2. **Location Permission**: Explanation of why location access is needed
+3. **Notification Permission**: Information about weather alerts and notifications
+4. **Completion Screen**: Confirmation that setup is complete
+
+### Onboarding Features
+
+- **Smooth Navigation**: Horizontal swiping between screens with page indicators
+- **Permission Integration**: Automatic permission requests at appropriate times
+- **Glassmorphism Design**: Consistent with the app's visual theme
+- **Skip Option**: Users can skip onboarding and complete it later
+- **Persistence**: Onboarding completion is saved and won't show again
+- **Reset Option**: Users can reset onboarding from the settings screen
+
+### Technical Implementation
+
+- Uses the `introduction_screen` package for smooth, professional onboarding
+- Integrated with existing permission services (location and notifications)
+- Follows the app's glassmorphism design patterns
+- State management through `OnboardingProvider`
+- Persistent storage using `SharedPreferences`
 
 ## 📱 Installation
 
@@ -135,3 +165,44 @@ lib/
 
 - `SDCity` - Represents South Dakota cities with location data and NWS office identifiers
 - `WeatherData`
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies: `flutter pub get`
+3. Configure API keys (see Configuration section)
+4. Run the app: `flutter run`
+
+## Configuration
+
+The app requires several API keys to function properly:
+
+- **Google Weather API**: For weather data
+- **Stadia Maps**: For map tiles
+- **RainViewer**: For radar data
+- **Firebase**: For notifications and backend services
+
+## Architecture
+
+The app follows clean architecture principles with:
+
+- **Models**: Data structures for weather, location, and user preferences
+- **Services**: API integrations and business logic
+- **Providers**: State management using Provider pattern
+- **Screens**: Full-page UI components
+- **Widgets**: Reusable UI components
+- **Theme**: Consistent styling and glassmorphism effects
+
+## Dependencies
+
+Key dependencies include:
+- `provider`: State management
+- `geolocator`: Location services
+- `flutter_map`: Interactive maps
+- `firebase_messaging`: Push notifications
+- `introduction_screen`: Onboarding flow
+- `shared_preferences`: Local data persistence
+
+## Contributing
+
+Please follow the established coding standards and design patterns when contributing to this project.

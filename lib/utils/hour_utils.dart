@@ -31,3 +31,17 @@ bool isNightHourMultiDay(DateTime hour, Map<String, DateTime?> todaySunEvents, M
   
   return hour.isBefore(sunrise) || hour.isAfter(sunset);
 }
+
+/// Returns true if the current time is during night hours based on sunrise/sunset times.
+/// This function is used for map tile selection (dark tiles at night, light tiles during day).
+bool isCurrentlyNight(DateTime? sunrise, DateTime? sunset) {
+  final now = DateTime.now();
+  
+  if (sunrise == null || sunset == null) {
+    // Fallback to hour-based logic if sunrise/sunset data is not available
+    return now.hour < 6 || now.hour > 18;
+  }
+  
+  // If current time is before sunrise or after sunset, it's night
+  return now.isBefore(sunrise) || now.isAfter(sunset);
+}

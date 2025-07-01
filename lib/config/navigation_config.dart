@@ -49,6 +49,12 @@ class NavigationConfig {
       screenId: 'almanac',
       index: 4,
     ),
+    NavigationItem(
+      title: 'Settings',
+      icon: Icons.settings,
+      screenId: 'settings',
+      index: 5,
+    ),
   ];
 
   /// Get a navigation item by its screen ID

@@ -1,4 +1,4 @@
-package com.example.sodak_weather
+package com.sodak_weather.app
 
 import io.flutter.embedding.android.FlutterActivity
 

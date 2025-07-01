@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../../theme/app_theme.dart';
+import '../../constants/ui_constants.dart';
 
 /// GlassCard creates a frosted glass effect
 /// Heavily optimized for performance while maintaining the glass-like appearance
@@ -25,7 +26,7 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final BorderRadius borderR = borderRadius ?? BorderRadius.circular(24);
+    final BorderRadius borderR = borderRadius ?? BorderRadius.circular(UIConstants.spacingXXXLarge);
 
     // For performance critical areas, use the simulated glass effect (no blur)
     if (!useBlur) {
@@ -49,7 +50,7 @@ class GlassCard extends StatelessWidget {
   Widget _buildSimulatedGlassCard(BorderRadius borderR) {
     // Use custom opacity if provided, otherwise use default AppTheme.glassCardColor
     final Color baseColor = opacity != null 
-        ? Colors.white.withValues(alpha: opacity!)
+        ? Colors.white.withValues(alpha: opacity!.clamp(0.0, 1.0))
         : AppTheme.glassCardColor;
     
     // Calculate gradient colors based on opacity
@@ -75,8 +76,8 @@ class GlassCard extends StatelessWidget {
         boxShadow: const [
           BoxShadow(
             color: AppTheme.glassShadowColor,
-            blurRadius: 4, // Reduced for better performance
-            offset: Offset(0, 2), // Smaller offset
+            blurRadius: UIConstants.spacingLarge, // Reduced for better performance
+            offset: Offset(0, UIConstants.spacingSmall), // Smaller offset
           ),
         ],
       ),
@@ -96,8 +97,8 @@ class GlassCard extends StatelessWidget {
             ? const [
                 BoxShadow(
                   color: AppTheme.glassShadowColor,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
+                  blurRadius: UIConstants.spacingXLarge,
+                  offset: Offset(0, UIConstants.spacingLarge),
                 ),
               ]
             : null, // No shadow when not using blur for maximum performance
@@ -105,4 +106,36 @@ class GlassCard extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// Shows a glassmorphic snackbar at the bottom of the screen using OverlayEntry.
+void showGlassCardSnackbar(BuildContext context, String message) {
+  final overlay = Overlay.of(context);
+
+  final overlayEntry = OverlayEntry(
+    builder: (context) => Positioned(
+      left: UIConstants.spacingXXXLarge,
+      right: UIConstants.spacingXXXLarge,
+      bottom: UIConstants.spacingXXXLarge * 2,
+      child: Material(
+        color: Colors.transparent,
+        child: GlassCard(
+          useBlur: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: UIConstants.spacingXXXLarge, vertical: UIConstants.spacingXLarge),
+          child: Center(
+            child: Text(
+              message,
+              style: AppTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay.insert(overlayEntry);
+  Future.delayed(UIConstants.delayLong, () {
+    overlayEntry.remove();
+  });
 }

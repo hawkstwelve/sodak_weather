@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// Data class for the entire RainViewer API response.
@@ -47,19 +46,18 @@ class RainViewerApi {
 
   /// Fetches the latest radar data from the RainViewer API.
   ///
-  /// Returns a [RainviewerData] object on success, or null on failure.
-  static Future<RainviewerData?> fetchRadarData() async {
+  /// Returns a [RainviewerData] object on success, or throws an exception on failure.
+  static Future<RainviewerData> fetchRadarData() async {
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         return RainviewerData.fromJson(data);
       } else {
-        debugPrint('Failed to load radar data: ${response.statusCode}');
+        throw Exception('Failed to load radar data: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error fetching radar data: $e');
+      throw Exception('Error fetching radar data: $e');
     }
-    return null;
   }
 }

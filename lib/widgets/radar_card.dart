@@ -3,10 +3,15 @@ import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 import '../models/sd_city.dart';
 import '../services/rainviewer_api.dart';
 import '../config/api_config.dart';
 import '../theme/app_theme.dart';
+import '../providers/weather_provider.dart';
+import '../utils/hour_utils.dart';
+import '../constants/ui_constants.dart';
+import '../constants/service_constants.dart';
 
 class RadarCard extends StatefulWidget {
   final SDCity city;
@@ -34,15 +39,15 @@ class _RadarCardState extends State<RadarCard> {
 
   Future<void> _fetchRadarFrame() async {
     final data = await RainViewerApi.fetchRadarData();
-    if (data != null && data.host != null) {
+    if (data.host != null) {
       final host = data.host!.startsWith('//')
           ? 'https:${data.host}'
           : data.host;
       RadarFrameInfo? frame;
-      if (data.nowcast.isNotEmpty) {
-        frame = data.nowcast.last;
-      } else if (data.past.isNotEmpty) {
+      if (data.past.isNotEmpty) {
         frame = data.past.last;
+      } else if (data.nowcast.isNotEmpty) {
+        frame = data.nowcast.last;
       }
       setState(() {
         _host = host;
@@ -69,7 +74,7 @@ class _RadarCardState extends State<RadarCard> {
 
     try {
       // Wait a bit more for tiles to be fully rendered
-      await Future.delayed(const Duration(milliseconds: 2000));
+      await Future.delayed(UIConstants.delayLong);
       
       final RenderRepaintBoundary? boundary = 
           _mapKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -102,7 +107,7 @@ class _RadarCardState extends State<RadarCard> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const SizedBox(
-        height: 160,
+        height: UIConstants.cardHeightLarge,
         child: Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor)),
       );
     }
@@ -110,16 +115,16 @@ class _RadarCardState extends State<RadarCard> {
     // If we have a screenshot, display it as a static image
     if (_screenshotImage != null) {
       return SizedBox(
-        height: 160,
+        height: UIConstants.cardHeightLarge,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(UIConstants.spacingXLarge),
           child: Stack(
             children: [
               RawImage(
                 image: _screenshotImage,
                 fit: BoxFit.cover,
                 width: double.infinity,
-                height: 160,
+                height: UIConstants.cardHeightLarge,
               ),
               Positioned.fill(
                 child: GestureDetector(
@@ -137,9 +142,15 @@ class _RadarCardState extends State<RadarCard> {
     }
 
     // Show the interactive map
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Get sunrise/sunset times from the weather provider to determine map style
+    final weatherProvider = Provider.of<WeatherProvider>(context);
+    final sunrise = weatherProvider.weatherData?.sunrise;
+    final sunset = weatherProvider.weatherData?.sunset;
+    
+    // Use sunrise/sunset times to determine if it's currently night
+    final isNight = isCurrentlyNight(sunrise, sunset);
     final mapLayer = TileLayer(
-      urlTemplate: isDark
+      urlTemplate: isNight
           ? ApiConfig.darkTileUrl
           : ApiConfig.lightTileUrl,
       userAgentPackageName: 'com.example.sodak_weather',
@@ -147,9 +158,10 @@ class _RadarCardState extends State<RadarCard> {
     );
     final radarLayer = (_host != null && _framePath != null)
         ? Opacity(
-            opacity: 0.7,
+            opacity: ServiceConstants.radarOpacity,
             child: TileLayer(
               urlTemplate: '$_host$_framePath/256/{z}/{x}/{y}/4/1_1.png',
+              tileDimension: 256,
               userAgentPackageName: 'com.example.sodak_weather',
               retinaMode: RetinaMode.isHighDensity(context),
             ),
@@ -159,9 +171,9 @@ class _RadarCardState extends State<RadarCard> {
     return Stack(
       children: [
         SizedBox(
-          height: 160,
+          height: UIConstants.cardHeightLarge,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(UIConstants.spacingXLarge),
             child: RepaintBoundary(
               key: _mapKey,
               child: FlutterMap(
@@ -170,7 +182,7 @@ class _RadarCardState extends State<RadarCard> {
                     widget.city.latitude,
                     widget.city.longitude,
                   ),
-                  initialZoom: 8.5,
+                  initialZoom: ServiceConstants.radarInitialZoom,
                   interactionOptions: const InteractionOptions(
                     flags: InteractiveFlag.none, // static
                   ),
@@ -180,7 +192,7 @@ class _RadarCardState extends State<RadarCard> {
                         _mapReady = true;
                       });
                       // Attempt screenshot after map is ready
-                      Future.delayed(const Duration(milliseconds: 1000), _attemptScreenshot);
+                      Future.delayed(UIConstants.delayMedium, _attemptScreenshot);
                     }
                   },
                 ),

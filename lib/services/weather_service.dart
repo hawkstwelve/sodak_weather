@@ -2,22 +2,21 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sd_city.dart';
 import '../models/hourly_forecast.dart';
 import '../models/weather_data.dart';
 import '../config/api_config.dart';
+import '../constants/service_constants.dart';
 
 class WeatherService {
   static const String _baseUrl = 'https://weather.googleapis.com/v1';
   static const int cacheDurationMs = 10 * 60 * 1000; // 10 minutes
-  static const Duration _timeout = Duration(seconds: 15);
-  static const int _maxRetries = 2;
+  static const String _cacheVersion = 'v3';
 
   // Default to Sioux Falls, SD coordinates
-  static const double _defaultLatitude = 43.5446;
-  static const double _defaultLongitude = -96.7311;
+  static const double _defaultLatitude = ServiceConstants.defaultLatitude;
+  static const double _defaultLongitude = ServiceConstants.defaultLongitude;
 
   Map<String, dynamic>? lastRawForecastData;
 
@@ -30,21 +29,17 @@ class WeatherService {
       final client = _createHttpClient();
       try {
         if (method == 'POST') {
-          return await client.post(url, headers: headers, body: body).timeout(_timeout);
+          return await client.post(url, headers: headers, body: body).timeout(ServiceConstants.requestTimeout);
         } else {
-          return await client.get(url, headers: headers).timeout(_timeout);
+          return await client.get(url, headers: headers).timeout(ServiceConstants.requestTimeout);
         }
-      } on SocketException catch (e) {
-        debugPrint('Network error: $e');
+      } on SocketException catch (_) {
         throw Exception('Network connection failed. Please check your internet connection.');
-      } on HandshakeException catch (e) {
-        debugPrint('SSL/TLS handshake error: $e');
+      } on HandshakeException catch (_) {
         throw Exception('Secure connection failed. Please try again.');
-      } on TimeoutException catch (e) {
-        debugPrint('Request timeout: $e');
+      } on TimeoutException catch (_) {
         throw Exception('Request timed out. Please try again.');
-      } catch (e) {
-        debugPrint('Unexpected error: $e');
+      } catch (_) {
         throw Exception('An unexpected error occurred. Please try again.');
       } finally {
         client.close();
@@ -59,9 +54,8 @@ class WeatherService {
         return await fn();
       } catch (e) {
         attempt++;
-        if (attempt > _maxRetries) rethrow;
-        debugPrint('Retrying network request (attempt $attempt)...');
-        await Future.delayed(const Duration(milliseconds: 500));
+        if (attempt > ServiceConstants.maxRetries) rethrow;
+        await Future.delayed(ServiceConstants.retryDelay);
       }
     }
   }
@@ -70,14 +64,14 @@ class WeatherService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cityKey = city?.name ?? (latitude != null && longitude != null ? '${latitude}_$longitude' : 'default');
-      final cacheKey = 'currentWeather_$cityKey';
+      final cacheKey = 'currentWeather_${ServiceConstants.cacheVersion}_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
 
       // Check cache
       final cached = prefs.getString(cacheKey);
       final cachedTime = prefs.getInt(cacheTimeKey);
-      if (cached != null && cachedTime != null && now - cachedTime < cacheDurationMs) {
+      if (cached != null && cachedTime != null && now - cachedTime < ServiceConstants.cacheDurationMs) {
         return json.decode(cached);
       }
 
@@ -89,19 +83,17 @@ class WeatherService {
       );
       final currentResponse = await _makeHttpRequest(currentUrl);
       if (currentResponse.statusCode != 200) {
-        debugPrint('Failed to get current conditions: ${currentResponse.statusCode}');
-        return null;
+        throw Exception('Failed to get current conditions: ${currentResponse.statusCode}');
       }
       final currentData = json.decode(currentResponse.body);
 
       // Google Weather API: Forecast (10 days)
       final forecastUrl = Uri.parse(
-        '$_baseUrl/forecast/days:lookup?location.latitude=$lat&location.longitude=$lon&unitsSystem=IMPERIAL&days=10&pageSize=10&key=${ApiConfig.googleApiKey}',
+        '$_baseUrl/forecast/days:lookup?location.latitude=$lat&location.longitude=$lon&unitsSystem=IMPERIAL&days=${ServiceConstants.forecastDays}&pageSize=${ServiceConstants.forecastDays}&key=${ApiConfig.googleApiKey}',
       );
       final forecastResponse = await _makeHttpRequest(forecastUrl);
       if (forecastResponse.statusCode != 200) {
-        debugPrint('Failed to get forecast: ${forecastResponse.statusCode}');
-        return null;
+        throw Exception('Failed to get forecast: ${forecastResponse.statusCode}');
       }
       final forecastData = json.decode(forecastResponse.body);
 
@@ -114,8 +106,7 @@ class WeatherService {
       prefs.setInt(cacheTimeKey, now);
       return result;
     } catch (e) {
-      debugPrint('Error in getCurrentWeather: $e');
-      return null;
+      throw Exception('Error in getCurrentWeather: $e');
     }
   }
 
@@ -127,7 +118,7 @@ class WeatherService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cityKey = city?.name ?? '${latitude}_$longitude';
-      final cacheKey = 'aqi_$cityKey';
+      final cacheKey = 'aqi_${_cacheVersion}_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -149,8 +140,7 @@ class WeatherService {
         method: 'POST',
       );
       if (response.statusCode != 200) {
-        debugPrint('Failed to fetch AQI: ${response.statusCode}');
-        return null;
+        throw Exception('Failed to fetch AQI: ${response.statusCode}');
       }
       final data = json.decode(response.body);
       int? aqi;
@@ -165,8 +155,7 @@ class WeatherService {
       }
       return aqi;
     } catch (e) {
-      debugPrint('Error in fetchAqi: $e');
-      return null;
+      throw Exception('Error in fetchAqi: $e');
     }
   }
 
@@ -178,7 +167,7 @@ class WeatherService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cityKey = city?.name ?? '${latitude}_$longitude';
-      final cacheKey = 'aqiCategory_$cityKey';
+      final cacheKey = 'aqiCategory_${_cacheVersion}_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -200,8 +189,7 @@ class WeatherService {
         method: 'POST',
       );
       if (response.statusCode != 200) {
-        debugPrint('Failed to fetch AQI category: ${response.statusCode}');
-        return null;
+        throw Exception('Failed to fetch AQI category: ${response.statusCode}');
       }
       final data = json.decode(response.body);
       String? aqi;
@@ -217,8 +205,7 @@ class WeatherService {
       prefs.setInt(cacheTimeKey, now);
       return result;
     } catch (e) {
-      debugPrint('Error in fetchAqiCategory: $e');
-      return null;
+      throw Exception('Error in fetchAqiCategory: $e');
     }
   }
 
@@ -304,8 +291,7 @@ class WeatherService {
       }
       return periods;
     } catch (e) {
-      debugPrint('Error in extractForecast: $e');
-      return [];
+      throw Exception('Error in extractForecast: $e');
     }
   }
 
@@ -313,7 +299,7 @@ class WeatherService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cityKey = city?.name ?? (latitude != null && longitude != null ? '${latitude}_$longitude' : 'default');
-      final cacheKey = 'hourlyWeather_$cityKey';
+      final cacheKey = 'hourlyWeather_${_cacheVersion}_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -331,8 +317,7 @@ class WeatherService {
       );
       final hourlyResponse = await _makeHttpRequest(hourlyUrl);
       if (hourlyResponse.statusCode != 200) {
-        debugPrint('Failed to get hourly forecast: ${hourlyResponse.statusCode}');
-        return [];
+        throw Exception('Failed to get hourly forecast: ${hourlyResponse.statusCode}');
       }
       final hourlyData = json.decode(hourlyResponse.body);
       final List<dynamic> hours = hourlyData['forecastHours'] ?? [];
@@ -340,8 +325,7 @@ class WeatherService {
       prefs.setInt(cacheTimeKey, now);
       return hours.map((h) => HourlyForecast.fromJson(h)).toList();
     } catch (e) {
-      debugPrint('Error in getHourlyForecast: $e');
-      return [];
+      throw Exception('Error in getHourlyForecast: $e');
     }
   }
 
@@ -351,7 +335,7 @@ class WeatherService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cityKey = city?.name ?? ('${latitude}_$longitude');
-      final cacheKey = 'rain24h_$cityKey';
+      final cacheKey = 'rain24h_${_cacheVersion}_$cityKey';
       final cacheTimeKey = '${cacheKey}_time';
       final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -361,14 +345,11 @@ class WeatherService {
         return Map<String, double>.from(json.decode(cached));
       }
 
-      final nowDt = DateTime.now().toUtc();
-      final startTime = nowDt.subtract(const Duration(hours: 24));
       final url = Uri.parse(
-        '$_baseUrl/history:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=METRIC&startTime=${startTime.toIso8601String()}&endTime=${nowDt.toIso8601String()}&key=${ApiConfig.googleApiKey}',
+        '$_baseUrl/history/hours:lookup?location.latitude=$latitude&location.longitude=$longitude&unitsSystem=METRIC&hours=24&key=${ApiConfig.googleApiKey}',
       );
       final response = await _makeHttpRequest(url);
       if (response.statusCode != 200) {
-        debugPrint('Warning: Failed to fetch weather history: ${response.statusCode}');
         return null;
       }
       final data = json.decode(response.body);
@@ -387,7 +368,6 @@ class WeatherService {
       prefs.setInt(cacheTimeKey, now);
       return result;
     } catch (e) {
-      debugPrint('Error in fetch24HourPrecipitationTotal: $e');
       return null;
     }
   }

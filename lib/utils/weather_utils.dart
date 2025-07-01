@@ -8,7 +8,9 @@ class WeatherUtils {
     if (condition == null) return 'assets/weather_icons/clear.png';
     final c = condition.toLowerCase();
 
-    if (c.contains('clear') || c.contains('sunny')) {
+    if (c.contains('partly') && c.contains('sunny')) {
+      return isNight ? 'assets/weather_icons/night_partly_cloudy.png' : 'assets/weather_icons/partly_cloudy.png';
+    } else if (c.contains('clear') || c.contains('sunny')) {
       return isNight ? 'assets/weather_icons/night_clear.png' : 'assets/weather_icons/clear.png';
     } else if (c.contains('partly') && c.contains('cloud')) {
       return isNight ? 'assets/weather_icons/night_partly_cloudy.png' : 'assets/weather_icons/partly_cloudy.png';
@@ -187,5 +189,15 @@ class WeatherUtils {
     }
     
     return '$baseString mph';
+  }
+
+  /// Convert UV index value to descriptive string
+  static String uvIndexDescription(int? uvIndex) {
+    if (uvIndex == null) return 'N/A';
+    if (uvIndex <= 2) return 'Low';
+    if (uvIndex <= 5) return 'Moderate';
+    if (uvIndex <= 7) return 'High';
+    if (uvIndex <= 10) return 'Very High';
+    return 'Extreme';
   }
 }

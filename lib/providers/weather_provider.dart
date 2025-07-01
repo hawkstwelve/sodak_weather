@@ -7,6 +7,7 @@ import '../services/weather_service.dart';
 import '../services/nws_alert_service.dart';
 import '../utils/sun_utils.dart';
 import 'location_provider.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// Manages the state for weather-related data.
 ///
@@ -71,16 +72,22 @@ class WeatherProvider with ChangeNotifier {
   /// Initialize with cached location if available, otherwise use default city
   Future<void> _initializeWithCachedLocation() async {
     if (_locationProvider == null) return;
-    
-    // Check if there's cached location
-    if (_locationProvider!.hasLocation && _locationProvider!.isUsingCachedLocation) {
+
+    // Always prefer device location if permission is granted and location is available
+    final permission = _locationProvider!.permissionStatus;
+    final hasLocation = _locationProvider!.hasLocation;
+    final isPermissionGranted =
+        permission == LocationPermission.always || permission == LocationPermission.whileInUse;
+
+    if (isPermissionGranted && hasLocation) {
       _isUsingLocation = true;
       await fetchAllWeatherDataForCoordinates(
         _locationProvider!.currentLocation!.latitude,
         _locationProvider!.currentLocation!.longitude,
       );
     } else {
-      // Fetch initial weather data for default city
+      _isUsingLocation = false;
+      _selectedCity = SDCities.siouxFalls;
       fetchAllWeatherData();
     }
   }
@@ -91,6 +98,9 @@ class WeatherProvider with ChangeNotifier {
       _selectedCity = city;
       _isUsingLocation = false;
       fetchAllWeatherData();
+      
+      // Sync location change with backend for notifications
+      _syncLocationChange();
     }
   }
 
@@ -120,6 +130,9 @@ class WeatherProvider with ChangeNotifier {
         // that listen to the location provider
       }
       
+      // Sync location change with backend for notifications
+      _syncLocationChange();
+      
       return true;
     } else {
       _errorMessage = _locationProvider!.errorMessage ?? 'Unable to get location';
@@ -143,12 +156,23 @@ class WeatherProvider with ChangeNotifier {
         _locationProvider!.currentLocation!.latitude,
         _locationProvider!.currentLocation!.longitude,
       );
+      
+      // Sync location change with backend for notifications
+      _syncLocationChange();
+      
       return true;
     } else {
       _errorMessage = _locationProvider!.errorMessage ?? 'Unable to refresh location';
       notifyListeners();
       return false;
     }
+  }
+
+  /// Sync location change with backend for notifications
+  void _syncLocationChange() {
+    // This will be called by the notification service when providers are set
+    // We'll trigger a notify to ensure the notification service picks up the change
+    notifyListeners();
   }
 
   /// Fetch weather data for specific coordinates

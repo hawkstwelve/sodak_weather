@@ -2,22 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_core/core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'providers/weather_provider.dart';
 import 'providers/location_provider.dart';
+import 'providers/notification_preferences_provider.dart';
+import 'providers/onboarding_provider.dart';
 import 'widgets/main_app_container.dart';
+import 'screens/onboarding_screen.dart';
 import 'theme/app_theme.dart';
-import 'config/api_config.dart';
+import 'services/notification_service.dart';
+import 'services/backend_service.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase first
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   await FMTCObjectBoxBackend().initialise();
-
-  // Register SyncFusion license if available
-  if (ApiConfig.hasValidSyncfusionLicense) {
-    SyncfusionLicense.registerLicense(ApiConfig.syncfusionLicenseKey);
-  }
 
   // Set status bar to transparent so gradient shows through
   SystemChrome.setSystemUIOverlayStyle(
@@ -34,16 +40,6 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Enable skia optimizations
-  // PaintingBinding.instance.imageCache.maximumSize = 100; // Control image cache size
-
-  // Uncomment the following during development to debug raster thread issues
-  // debugPrintRebuildDirtyWidgets = true;
-
-  // Optimize Flutter rendering engine
-  // These can greatly improve scrolling performance
-  // Paint.enableDithering = false;
-
   runApp(
     MultiProvider(
       providers: [
@@ -55,6 +51,28 @@ Future<void> main() async {
             return weatherProvider ?? WeatherProvider();
           },
         ),
+        ChangeNotifierProvider<NotificationPreferencesProvider>(
+          create: (_) {
+            final provider = NotificationPreferencesProvider();
+            // Load preferences (will create defaults if none exist)
+            provider.loadPreferences();
+            return provider;
+          },
+        ),
+        ChangeNotifierProvider<NotificationService>(
+          create: (_) {
+            final service = NotificationService();
+            // Initialize the service after creation
+            service.initialize();
+            return service;
+          },
+        ),
+        Provider<BackendService>(
+          create: (_) => BackendService(),
+        ),
+        ChangeNotifierProvider<OnboardingProvider>(
+          create: (_) => OnboardingProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -62,17 +80,86 @@ Future<void> main() async {
 }
 
 /// Main app entry point - optimized for performance
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Set up provider connections after the widget tree is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupProviderConnections();
+    });
+  }
+
+  void _setupProviderConnections() {
+    final notificationService = Provider.of<NotificationService>(context, listen: false);
+    final preferencesProvider = Provider.of<NotificationPreferencesProvider>(context, listen: false);
+    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+    final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+    final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
+
+    // Initialize onboarding provider
+    onboardingProvider.initialize();
+
+    // Set up notification service with providers
+    notificationService.setProviders(
+      preferencesProvider: preferencesProvider,
+      weatherProvider: weatherProvider,
+      locationProvider: locationProvider,
+    );
+
+    // Initialize notification service
+    notificationService.initialize();
+
+    // Sync current location with backend for notifications
+    notificationService.syncLocationWithBackend();
+
+    // Listen for location changes
+    weatherProvider.addListener(() {
+      notificationService.onLocationChanged();
+    });
+
+    locationProvider.addListener(() {
+      // Sync location with backend when location provider changes
+      notificationService.onLocationChanged();
+    });
+
+    // Initial location sync
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notificationService.onLocationChanged();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SoDak Weather',
+      title: 'Sodak Weather',
       theme: AppTheme.theme,
-      // Enable this line to test the new glass components
-      // home: const GlassComponentsTest(),
-      home: const MainAppContainer(),
+      home: Consumer<OnboardingProvider>(
+        builder: (context, onboardingProvider, child) {
+          if (onboardingProvider.isLoading) {
+            // Show loading screen while checking onboarding status
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.textLight,
+                ),
+              ),
+            );
+          }
+          
+          // Show onboarding if not complete, otherwise show main app
+          return onboardingProvider.isComplete 
+              ? const MainAppContainer() 
+              : const OnboardingScreen();
+        },
+      ),
       debugShowCheckedModeBanner: false,
       // Routes for different screens
       routes: const {},

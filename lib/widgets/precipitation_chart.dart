@@ -4,6 +4,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/hourly_forecast.dart';
 import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
+import '../constants/ui_constants.dart';
 
 class PrecipitationChart extends StatefulWidget {
   final List<HourlyForecast> hourlyForecast;
@@ -87,34 +88,37 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
 
     return GlassCard(
       useBlur: widget.useBlur,
-      opacity: 0.2,
+      opacity: UIConstants.opacityVeryLow,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(UIConstants.spacingXLarge),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 const Icon(Icons.water_drop, color: AppTheme.textLight, size: 20),
-                const SizedBox(width: 8),
+                const SizedBox(width: UIConstants.spacingStandard),
                 Text(
                   '24-Hour Precipitation',
                   style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: UIConstants.spacingXLarge),
             SizedBox(
-              height: 200,
+              height: UIConstants.chartHeight,
               child: SfCartesianChart(
                 plotAreaBorderColor: Colors.white,
                 plotAreaBorderWidth: 1,
                 backgroundColor: Colors.transparent,
-                primaryXAxis: CategoryAxis(
+                primaryXAxis: DateTimeAxis(
                   majorGridLines: const MajorGridLines(width: 0),
                   axisLine: const AxisLine(width: 0),
                   majorTickLines: const MajorTickLines(size: 0),
                   labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
+                  intervalType: DateTimeIntervalType.hours,
+                  dateFormat: DateFormat('ha'),
+                  edgeLabelPlacement: EdgeLabelPlacement.shift,
                 ),
                 primaryYAxis: NumericAxis(
                   name: 'probability',
@@ -123,7 +127,7 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
                   interval: 25,
                   axisLine: const AxisLine(width: 1, color: Colors.white),
                   majorTickLines: const MajorTickLines(
-                    size: 5,
+                    size: 0,
                     color: Colors.white,
                   ),
                   majorGridLines: const MajorGridLines(
@@ -144,7 +148,7 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
                     interval: _maxAmount / 4,
                     axisLine: const AxisLine(width: 1, color: Colors.white),
                     majorTickLines: const MajorTickLines(
-                      size: 5,
+                      size: 0,
                       color: Colors.white,
                     ),
                     majorGridLines: const MajorGridLines(
@@ -167,7 +171,7 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: UIConstants.spacingLarge),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -181,36 +185,36 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
     );
   }
 
-  List<CartesianSeries<_ChartData, String>> _getSeries() {
-    return <CartesianSeries<_ChartData, String>>[
-      SplineAreaSeries<_ChartData, String>(
+  List<CartesianSeries<_ChartData, DateTime>> _getSeries() {
+    return <CartesianSeries<_ChartData, DateTime>>[
+      SplineAreaSeries<_ChartData, DateTime>(
         dataSource: _chartData,
-        xValueMapper: (_ChartData data, _) => DateFormat('ha').format(data.time),
+        xValueMapper: (_ChartData data, _) => data.time,
         yValueMapper: (_ChartData data, _) => data.probability,
         yAxisName: 'probability',
         name: 'Probability',
-        color: Colors.blue.withOpacity(0.3),
+        color: Colors.blue.withAlpha((0.3 * 255).round()),
         borderColor: Colors.blue,
         borderWidth: 2,
         animationDuration: 1000,
         selectionBehavior: SelectionBehavior(
           enable: true,
-          selectedColor: Colors.blue.withOpacity(0.5),
+          selectedColor: Colors.blue.withAlpha((0.5 * 255).round()),
         ),
       ),
-      SplineAreaSeries<_ChartData, String>(
+      SplineAreaSeries<_ChartData, DateTime>(
         dataSource: _chartData,
-        xValueMapper: (_ChartData data, _) => DateFormat('ha').format(data.time),
+        xValueMapper: (_ChartData data, _) => data.time,
         yValueMapper: (_ChartData data, _) => data.amount,
         yAxisName: 'amount',
         name: 'Amount',
-        color: Colors.amber.withOpacity(0.3),
+        color: Colors.amber.withAlpha((0.3 * 255).round()),
         borderColor: Colors.amber,
         borderWidth: 2,
         animationDuration: 1000,
         selectionBehavior: SelectionBehavior(
           enable: true,
-          selectedColor: Colors.amber.withOpacity(0.5),
+          selectedColor: Colors.amber.withAlpha((0.5 * 255).round()),
         ),
       ),
     ];
@@ -220,14 +224,14 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
     return Row(
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: UIConstants.spacingLarge,
+          height: UIConstants.spacingLarge,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(UIConstants.spacingTiny),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: UIConstants.spacingSmall),
         Text(
           label,
           style: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),

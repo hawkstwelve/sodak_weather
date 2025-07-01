@@ -8,10 +8,16 @@ class WeatherHistoryHour {
   });
 
   factory WeatherHistoryHour.fromJson(Map<String, dynamic> json) {
+    // Google Weather API v1: 'interval' contains 'startTime', 'precipitation' contains 'amount' (mm)
+    final interval = json['interval'];
+    final precipitation = json['precipitation'];
+    final qpf = precipitation != null ? precipitation['qpf'] : null;
     return WeatherHistoryHour(
-      time: DateTime.parse(json['dateTime']),
-      precipitationMm: json['qpf'] != null && json['qpf']['quantity'] != null
-          ? (json['qpf']['quantity'] as num).toDouble()
+      time: interval != null && interval['startTime'] != null
+          ? DateTime.parse(interval['startTime'])
+          : DateTime.now(), // fallback to now if missing
+      precipitationMm: qpf != null && qpf['quantity'] != null
+          ? (qpf['quantity'] as num).toDouble()
           : null,
     );
   }

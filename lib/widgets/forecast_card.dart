@@ -3,12 +3,13 @@ import 'package:intl/intl.dart';
 import '../models/weather_data.dart';
 import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
+import '../constants/ui_constants.dart';
 
 // Constants for styling and layout
-const double kIconSize = 56.0;
-const double kSpacingSmall = 6.0;
-const double kSpacingStandard = 16.0;
-const double kCardPadding = 24.0;
+const double kIconSize = UIConstants.iconSizeLarge;
+const double kSpacingSmall = UIConstants.spacingMedium;
+const double kSpacingStandard = UIConstants.spacingXLarge;
+const double kCardPadding = UIConstants.spacingXXXLarge;
 
 class ForecastCard extends StatelessWidget {
   final ForecastPeriod? dayPeriod;
@@ -30,12 +31,12 @@ class ForecastCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 110,
-      height: 140,
+      height: UIConstants.cardHeightMedium,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            top: 16,
+            top: UIConstants.spacingXLarge,
             child: GestureDetector(
               onTap: () => _showDetailDialog(context),
               child: GlassCard(
@@ -44,13 +45,13 @@ class ForecastCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 10,
-                    horizontal: 6,
+                    horizontal: UIConstants.spacingMedium,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 24),
+                      const SizedBox(height: UIConstants.spacingXXXLarge),
                       Text(
                         DateFormat('E').format(date),
                         style: AppTheme.bodySmall.copyWith(
@@ -88,7 +89,7 @@ class ForecastCard extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: -4,
+            top: -UIConstants.spacingSmall,
             left: 0,
             right: 0,
             child: Center(
@@ -124,8 +125,8 @@ class ForecastCard extends StatelessWidget {
                   // Date header with appropriate icon
                   Image.asset(
                     iconAsset,
-                    width: 72,
-                    height: 72,
+                    width: UIConstants.iconSizeLarge,
+                    height: UIConstants.iconSizeLarge,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: kSpacingStandard),
@@ -166,7 +167,7 @@ class ForecastCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.wb_sunny, color: AppTheme.iconDay, size: 20),
-            const SizedBox(width: 4),
+            const SizedBox(width: UIConstants.spacingSmall),
             Text(
               'Daytime',
               style: AppTheme.bodyLarge.copyWith(
@@ -176,12 +177,12 @@ class ForecastCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: UIConstants.spacingStandard),
         Text(
           'High: ${dayPeriod!.temperature}°F',
           style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: UIConstants.spacingStandard),
         // Only show the short forecast in bold, remove detailed/duplicate
         Text(
           dayPeriod!.shortForecast,
@@ -191,7 +192,7 @@ class ForecastCard extends StatelessWidget {
         // --- New detailed fields ---
         if (dayPeriod!.precipProbability != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingStandard),
             child: Text(
               'Precipitation: ${dayPeriod!.precipProbability}%',
               style: AppTheme.bodyMedium,
@@ -199,7 +200,7 @@ class ForecastCard extends StatelessWidget {
           ),
         if (dayPeriod!.windSpeed.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
               'Wind: ${_formatWind(dayPeriod!.windSpeed, dayPeriod!.windDirection)}',
               style: AppTheme.bodyMedium,
@@ -207,17 +208,17 @@ class ForecastCard extends StatelessWidget {
           ),
         if (dayPeriod!.cloudCover != null)
           Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
               'Cloud Cover: ${dayPeriod!.cloudCover}%',
               style: AppTheme.bodyMedium,
             ),
           ),
-        if (dayPeriod!.detailedForecast.isNotEmpty) const SizedBox(height: 8),
+        if (dayPeriod!.detailedForecast.isNotEmpty) const SizedBox(height: UIConstants.spacingStandard),
         // Thunderstorm probability
         if (dayPeriod!.thunderstormProbability != null)
           Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
               'Thunderstorm Probability: ${dayPeriod!.thunderstormProbability}%',
               style: AppTheme.bodyMedium,
@@ -230,12 +231,12 @@ class ForecastCard extends StatelessWidget {
   Widget _buildNightForecast(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: UIConstants.spacingXLarge),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.nights_stay, color: AppTheme.iconNight, size: 20),
-            const SizedBox(width: 4),
+            const SizedBox(width: UIConstants.spacingSmall),
             Text(
               'Overnight',
               style: AppTheme.bodyLarge.copyWith(
@@ -245,12 +246,12 @@ class ForecastCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: UIConstants.spacingStandard),
         Text(
           'Low: ${nightPeriod!.temperature}°F',
           style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: UIConstants.spacingStandard),
         // Only show the short forecast in bold, remove detailed/duplicate
         Text(
           nightPeriod!.shortForecast,
@@ -260,7 +261,7 @@ class ForecastCard extends StatelessWidget {
         // --- New detailed fields ---
         if (nightPeriod!.precipProbability != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingStandard),
             child: Text(
               'Precipitation: ${nightPeriod!.precipProbability}%',
               style: AppTheme.bodyMedium,
@@ -268,7 +269,7 @@ class ForecastCard extends StatelessWidget {
           ),
         if (nightPeriod!.windSpeed.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
               'Wind: ${_formatWind(nightPeriod!.windSpeed, nightPeriod!.windDirection)}',
               style: AppTheme.bodyMedium,
@@ -276,7 +277,7 @@ class ForecastCard extends StatelessWidget {
           ),
         if (nightPeriod!.cloudCover != null)
           Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
               'Cloud Cover: ${nightPeriod!.cloudCover}%',
               style: AppTheme.bodyMedium,
@@ -285,7 +286,7 @@ class ForecastCard extends StatelessWidget {
         // Thunderstorm probability
         if (nightPeriod!.thunderstormProbability != null)
           Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
               'Thunderstorm Probability: ${nightPeriod!.thunderstormProbability}%',
               style: AppTheme.bodyMedium,

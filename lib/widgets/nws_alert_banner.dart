@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/nws_alert_model.dart';
+import '../constants/ui_constants.dart';
 
 class NwsAlertBanner extends StatefulWidget {
   final List<NwsAlertFeature> alerts;
@@ -42,15 +43,15 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
           final props = alert.properties;
           final color = _getBannerColor(props?.severity);
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(vertical: 4),
+            duration: UIConstants.animationFast,
+            margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingSmall),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(16), // More rounded corners
+              borderRadius: BorderRadius.circular(UIConstants.spacingXLarge), // More rounded corners
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black26,
-                  blurRadius: 4,
+                  blurRadius: UIConstants.spacingSmall,
                   offset: Offset(0, 2),
                 ),
               ],
@@ -58,7 +59,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(16), // Match card rounding
+                borderRadius: BorderRadius.circular(UIConstants.spacingXLarge), // Match card rounding
                 onTap: () {
                   setState(() {
                     _expanded[i] = !_expanded[i];
@@ -66,8 +67,8 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: UIConstants.spacingXLarge,
+                    vertical: UIConstants.spacingLarge,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +79,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                             Icons.warning_amber_rounded,
                             color: Colors.white,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: UIConstants.spacingStandard),
                           Expanded(
                             child: Text(
                               props?.event ?? 'NWS Alert', // Only show main alert name
@@ -98,7 +99,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                         ],
                       ),
                       if (_expanded[i]) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: UIConstants.spacingStandard),
                         if (props?.headline != null)
                           Text(
                             props!.headline!,
@@ -109,7 +110,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                             ),
                           ),
                         if (props?.description != null) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: UIConstants.spacingMedium),
                           Text(
                             props!.description!,
                             style: const TextStyle(
@@ -119,7 +120,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                           ),
                         ],
                         if (props?.instruction != null) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: UIConstants.spacingMedium),
                           Text(
                             props!.instruction!,
                             style: const TextStyle(
@@ -130,7 +131,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                           ),
                         ],
                         if (props?.expires != null) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: UIConstants.spacingMedium),
                           Text(
                             'Expires: ${props!.expires}',
                             style: const TextStyle(
