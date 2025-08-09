@@ -7,6 +7,9 @@ import 'providers/weather_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/notification_preferences_provider.dart';
 import 'providers/onboarding_provider.dart';
+import 'providers/drought_monitor_provider.dart';
+import 'providers/soil_moisture_provider.dart';
+import 'providers/weather_chat_provider.dart';
 import 'widgets/main_app_container.dart';
 import 'screens/onboarding_screen.dart';
 import 'theme/app_theme.dart';
@@ -72,6 +75,15 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<OnboardingProvider>(
           create: (_) => OnboardingProvider(),
+        ),
+        ChangeNotifierProvider<DroughtMonitorProvider>(
+          create: (_) => DroughtMonitorProvider(),
+        ),
+        ChangeNotifierProvider<SoilMoistureProvider>(
+          create: (_) => SoilMoistureProvider(),
+        ),
+        ChangeNotifierProvider<WeatherChatProvider>(
+          create: (_) => WeatherChatProvider(),
         ),
       ],
       child: const MyApp(),

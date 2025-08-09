@@ -139,6 +139,7 @@ class ForecastPeriod {
   final String temperatureUnit;
   final String windSpeed;
   final String windDirection;
+  final double? windGust;
   final String shortForecast;
   final String detailedForecast;
   final String icon;
@@ -150,6 +151,7 @@ class ForecastPeriod {
   final DateTime? sunriseTime;
   final DateTime? sunsetTime;
   final int? thunderstormProbability;
+  final int? relativeHumidity;
 
   ForecastPeriod({
     required this.name,
@@ -157,6 +159,7 @@ class ForecastPeriod {
     required this.temperatureUnit,
     required this.windSpeed,
     required this.windDirection,
+    this.windGust,
     required this.shortForecast,
     required this.detailedForecast,
     required this.icon,
@@ -168,6 +171,7 @@ class ForecastPeriod {
     this.sunriseTime,
     this.sunsetTime,
     this.thunderstormProbability,
+    this.relativeHumidity,
   });
 
   factory ForecastPeriod.fromJson(Map<String, dynamic> json) {
@@ -181,6 +185,7 @@ class ForecastPeriod {
       temperatureUnit: json['temperatureUnit']?.toString() ?? '',
       windSpeed: json['windSpeed']?.toString() ?? '',
       windDirection: json['windDirection']?.toString() ?? '',
+      windGust: (json['windGust'] as num?)?.toDouble(),
       shortForecast: json['shortForecast']?.toString() ?? '',
       detailedForecast: json['detailedForecast']?.toString() ?? '',
       icon: json['icon']?.toString() ?? '',
@@ -207,6 +212,11 @@ class ForecastPeriod {
           ? json['thunderstormProbability']
           : (json['thunderstormProbability'] is double)
               ? (json['thunderstormProbability'] as double).round()
+              : null,
+      relativeHumidity: json['relativeHumidity'] is int
+          ? json['relativeHumidity']
+          : (json['relativeHumidity'] is double)
+              ? (json['relativeHumidity'] as double).round()
               : null,
     );
   }

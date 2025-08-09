@@ -7,8 +7,8 @@ import '../models/hourly_forecast.dart';
 import '../models/sd_city.dart';
 import '../models/nws_alert_model.dart';
 import '../widgets/glass/glass_card.dart';
-import '../widgets/forecast_card.dart';
-import '../widgets/hourly_forecast_card.dart';
+import '../widgets/daily_forecast_list_item.dart';
+import '../widgets/hourly_forecast_list_item.dart';
 import '../widgets/precipitation_chart.dart';
 import '../utils/weather_utils.dart';
 import '../theme/app_theme.dart';
@@ -371,7 +371,7 @@ class WeatherPage extends StatelessWidget {
       children: [
         Text('Hourly Forecast', style: AppTheme.headingSmall),
         const SizedBox(height: UIConstants.spacingXLarge),
-        _buildHourlyForecastRow(context),
+        const _HourlyForecastListSection(),
       ],
     );
   }
@@ -485,49 +485,7 @@ class WeatherPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHourlyForecastRow(BuildContext context) {
-    return Selector<WeatherProvider, List<HourlyForecast>?>(
-      selector: (context, provider) => provider.hourlyForecast,
-      builder: (context, hourlyForecast, child) {
-        if (hourlyForecast == null || hourlyForecast.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        final now = DateTime.now();
-        final List<HourlyForecast> sorted = List.from(hourlyForecast);
-        sorted.sort((a, b) => a.time.toLocal().compareTo(b.time.toLocal()));
-        int startIdx = sorted.indexWhere(
-          (f) => f.time.toLocal().isAfter(now.subtract(const Duration(minutes: 30))),
-        );
-        if (startIdx == -1) startIdx = 0;
-
-        return Selector<WeatherProvider, WeatherData>(
-          selector: (context, provider) => provider.weatherData!,
-          builder: (context, weatherData, child) {
-            return SizedBox(
-              height: kHourlyForecastCardHeight,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: sorted.length - startIdx,
-                itemBuilder: (context, index) {
-                  final itemIndex = startIdx + index;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: UIConstants.spacingXLarge),
-                    child: HourlyForecastCard(
-                      forecast: sorted[itemIndex],
-                      sunrise: weatherData.sunrise,
-                      sunset: weatherData.sunset,
-                      tomorrowSunrise: weatherData.tomorrowSunrise,
-                      tomorrowSunset: weatherData.tomorrowSunset,
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  // Legacy _buildHourlyForecastRow removed in favor of _HourlyForecastListSection
 
   Widget _buildPrecipitationChart(BuildContext context) {
     return Selector<WeatherProvider, List<HourlyForecast>?>(
@@ -590,47 +548,48 @@ class WeatherPage extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        final Map<String, List<ForecastPeriod>> forecastByDay = {};
-        for (var period in forecast) {
-          final dateKey = DateFormat('yyyy-MM-dd').format(period.startTime);
-          if (!forecastByDay.containsKey(dateKey)) {
-            forecastByDay[dateKey] = [];
-          }
-          forecastByDay[dateKey]!.add(period);
+        final Map<String, List<ForecastPeriod>> forecastByDay = <String, List<ForecastPeriod>>{};
+        for (final ForecastPeriod period in forecast) {
+          final String dateKey = DateFormat('yyyy-MM-dd').format(period.startTime);
+          forecastByDay.putIfAbsent(dateKey, () => <ForecastPeriod>[]).add(period);
         }
 
-        return SizedBox(
-          height: UIConstants.cardHeightLarge,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: forecastByDay.length,
-            separatorBuilder: (context, index) => const SizedBox(width: UIConstants.spacingXLarge),
-            itemBuilder: (context, index) {
-              final dateKey = forecastByDay.keys.elementAt(index);
-              final periods = forecastByDay[dateKey]!;
-              final date = DateTime.parse(dateKey);
+        final List<String> sortedKeys = forecastByDay.keys.toList()
+          ..sort((a, b) => DateTime.parse(a).compareTo(DateTime.parse(b)));
 
-              final dayPeriod = periods.firstWhere(
-                (p) => p.isDaytime,
-                orElse: () => periods.first, // Fallback
-              );
-              final nightPeriod = periods.firstWhere(
-                (p) => !p.isDaytime,
-                orElse: () => periods.last, // Fallback
-              );
-              final iconAsset = WeatherUtils.getWeatherIconAsset(
-                dayPeriod.shortForecast,
-                isNight: false,
-              );
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: sortedKeys.length,
+              separatorBuilder: (context, index) => const SizedBox(height: UIConstants.spacingLarge),
+              itemBuilder: (context, index) {
+                final String dateKey = sortedKeys[index];
+                final List<ForecastPeriod> periods = forecastByDay[dateKey]!;
+                final DateTime date = DateTime.parse(dateKey);
 
-              return ForecastCard(
-                date: date,
-                dayPeriod: dayPeriod,
-                nightPeriod: nightPeriod,
-                iconAsset: iconAsset,
-              );
-            },
+                ForecastPeriod? dayPeriod;
+                ForecastPeriod? nightPeriod;
+                try {
+                  dayPeriod = periods.firstWhere((p) => p.isDaytime);
+                } catch (_) {
+                  dayPeriod = null;
+                }
+                try {
+                  nightPeriod = periods.firstWhere((p) => !p.isDaytime);
+                } catch (_) {
+                  nightPeriod = null;
+                }
+
+                return DailyForecastListItem(
+                  date: date,
+                  dayPeriod: dayPeriod,
+                  nightPeriod: nightPeriod,
+                );
+              },
+            ),
           ),
         );
       },
@@ -662,6 +621,103 @@ class WeatherPage extends StatelessWidget {
               },
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+class _HourlyForecastListSection extends StatefulWidget {
+  const _HourlyForecastListSection();
+
+  @override
+  State<_HourlyForecastListSection> createState() => _HourlyForecastListSectionState();
+}
+
+class _HourlyForecastListSectionState extends State<_HourlyForecastListSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildHourlyForecastList(context),
+        const SizedBox(height: UIConstants.spacingLarge),
+        Center(
+          child: GestureDetector(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: GlassCard(
+              useBlur: false,
+              opacity: UIConstants.opacityLow,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: UIConstants.spacingStandard,
+                  horizontal: UIConstants.spacingXLarge,
+                ),
+                child: Text(
+                  _isExpanded ? 'Show less' : 'Show all 24 hours',
+                  style: AppTheme.bodyMedium,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHourlyForecastList(BuildContext context) {
+    return Selector<WeatherProvider, List<HourlyForecast>?>(
+      selector: (context, provider) => provider.hourlyForecast,
+      builder: (context, hourlyForecast, child) {
+        if (hourlyForecast == null || hourlyForecast.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final DateTime now = DateTime.now();
+        final List<HourlyForecast> sorted = List<HourlyForecast>.from(hourlyForecast)
+          ..sort((a, b) => a.time.toLocal().compareTo(b.time.toLocal()));
+        final List<HourlyForecast> next24 = sorted
+            .where((f) => f.time.toLocal().isAfter(now.subtract(const Duration(minutes: 30))))
+            .take(24)
+            .toList();
+
+        final List<HourlyForecast> visible = _isExpanded ? next24 : next24.take(6).toList();
+
+        return Selector<WeatherProvider, WeatherData>(
+          selector: (context, provider) => provider.weatherData!,
+          builder: (context, weatherData, child) {
+            final Widget list = ListView.separated(
+              shrinkWrap: !_isExpanded,
+              physics: _isExpanded
+                  ? const ClampingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              primary: false,
+              itemCount: visible.length,
+              separatorBuilder: (context, index) => const SizedBox(height: UIConstants.spacingLarge),
+              itemBuilder: (context, index) {
+                final HourlyForecast f = visible[index];
+                return HourlyForecastListItem(
+                  forecast: f,
+                  sunrise: weatherData.sunrise,
+                  sunset: weatherData.sunset,
+                  tomorrowSunrise: weatherData.tomorrowSunrise,
+                  tomorrowSunset: weatherData.tomorrowSunset,
+                );
+              },
+            );
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: _isExpanded
+                    ? SizedBox(
+                        height: 360,
+                        child: list,
+                      )
+                    : list,
+              ),
+            );
+          },
         );
       },
     );

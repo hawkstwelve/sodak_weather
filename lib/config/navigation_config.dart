@@ -33,13 +33,13 @@ class NavigationConfig {
     ),
     NavigationItem(
       title: 'Area Forecast Discussion',
-      icon: Icons.article,
+      icon: Icons.description,
       screenId: 'afd',
       index: 2,
     ),
     NavigationItem(
       title: 'Storm Outlooks',
-      icon: Icons.warning,
+      icon: Icons.bolt,
       screenId: 'spc_outlooks',
       index: 3,
     ),
@@ -50,10 +50,22 @@ class NavigationConfig {
       index: 4,
     ),
     NavigationItem(
+      title: 'Agriculture',
+      icon: Icons.agriculture,
+      screenId: 'agriculture',
+      index: 5,
+    ),
+    NavigationItem(
+      title: 'AI Weather Chat',
+      icon: Icons.auto_awesome,
+      screenId: 'weather_chat',
+      index: 6,
+    ),
+    NavigationItem(
       title: 'Settings',
       icon: Icons.settings,
       screenId: 'settings',
-      index: 5,
+      index: 7,
     ),
   ];
 

@@ -6,6 +6,8 @@ import '../screens/radar_screen.dart';
 import '../screens/afd_screen.dart';
 import '../screens/spc_outlooks_screen.dart';
 import '../screens/almanac_screen.dart';
+import '../screens/agriculture_screen.dart';
+import '../screens/weather_chat_screen.dart';
 import '../screens/settings_screen.dart';
 import '../providers/weather_provider.dart';
 import '../providers/location_provider.dart';
@@ -192,6 +194,8 @@ class _MainAppContainerState extends State<MainAppContainer> {
     if (currentItem?.screenId == 'weather') {
       final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
       return '${weatherProvider.selectedCity.name} Weather';
+    } else if (currentItem?.screenId == 'weather_chat') {
+      return 'AI Weather Chat';
     }
     return currentItem?.title ?? 'Sodak Weather';
   }
@@ -227,6 +231,12 @@ class _MainAppContainerState extends State<MainAppContainer> {
           onNavigate: _handleNavigation,
           currentScreenId: 'almanac',
         ),
+        AgricultureScreen(
+          citySelector: citySelectorWidget,
+          onNavigate: _handleNavigation,
+          currentScreenId: 'agriculture',
+        ),
+        const WeatherChatScreen(),
         SettingsScreen(onNavigate: _handleNavigation),
       ],
     );

@@ -114,24 +114,10 @@ function isPointInPolygon(point: [number, number], polygon: number[][]): boolean
 }
 
 function isLocationInAlertArea(userLat: number, userLon: number, alertGeometry: any, alertType?: string, areaDesc?: string): boolean {
-  if (!alertGeometry) {
-    console.log(`❌ No alert geometry provided`);
-    
-    // Method 3: Fallback to areaDesc parsing for alerts without geometry
-    if (areaDesc) {
-      console.log(`🔍 Attempting to match by area description: ${areaDesc}`);
-      return _isLocationInAreaDescription(userLat, userLon, areaDesc);
-    }
-    
-    console.log(`❌ No geometry or area description available`);
-    return false;
-  }
-  
   console.log(`🔍 Checking location match for user at (${userLat}, ${userLon}) for ${alertType}`);
-  console.log(`🗺️ Alert geometry type: ${alertGeometry.type}`);
   
-  // Method 1: Check if user is within the actual alert polygon
-  if (alertGeometry.type === 'Polygon' && alertGeometry.coordinates) {
+  // Method 1: Check if user is within the actual alert polygon (most accurate)
+  if (alertGeometry && alertGeometry.type === 'Polygon' && alertGeometry.coordinates) {
     const polygon = alertGeometry.coordinates[0]; // First ring of the polygon
     console.log(`📍 Checking polygon with ${polygon.length} points`);
     
@@ -143,8 +129,28 @@ function isLocationInAlertArea(userLat: number, userLon: number, alertGeometry: 
     }
   }
   
-  // Method 2: Check if user is within a reasonable distance of the alert center
-  if (alertGeometry.coordinates) {
+  // Method 2: County-based filtering using area description (most reliable for county boundaries)
+  if (areaDesc) {
+    console.log(`🔍 Attempting to match by area description: ${areaDesc}`);
+    const countyMatch = _isLocationInAreaDescription(userLat, userLon, areaDesc);
+    if (countyMatch) {
+      console.log(`✅ User's county found in alert area`);
+      return true;
+    } else {
+      console.log(`❌ User's county not found in alert area`);
+    }
+  }
+  
+  // Method 3: Conservative distance-based fallback (only for alerts without geometry or area description)
+  if (alertGeometry && alertGeometry.coordinates) {
+    // For certain hydrologic alerts (e.g., river Flood Warnings), avoid distance fallback entirely
+    const type = (alertType || '').toLowerCase();
+    const isHydro = type.includes('flood') || type.includes('river') || type.includes('hydrolog');
+    if (isHydro) {
+      console.log(`💧 Hydrologic alert detected (${alertType}) - skipping distance-based fallback to avoid cross-county noise`);
+      return false;
+    }
+
     // For polygon geometry, calculate the center
     let alertCenterLon, alertCenterLat;
     
@@ -168,19 +174,19 @@ function isLocationInAlertArea(userLat: number, userLon: number, alertGeometry: 
     const distance = calculateDistance(userLat, userLon, alertCenterLat, alertCenterLon);
     console.log(`📏 Distance from alert center: ${distance.toFixed(2)}km`);
     
-    // Adjust distance threshold based on alert type
+    // Use much more conservative distance thresholds to avoid cross-county notifications
     let maxDistance: number;
     if (alertType && alertType.toLowerCase().includes('watch')) {
-      // Watches typically cover larger areas - be more generous
-      maxDistance = 150; // 150km radius for watches
+      // Watches typically cover larger areas but still be conservative
+      maxDistance = 50; // Reduced from 150km to 50km radius for watches
       console.log(`👀 Watch alert detected - using ${maxDistance}km radius`);
     } else if (alertType && alertType.toLowerCase().includes('warning')) {
-      // Warnings are more localized
-      maxDistance = 75; // 75km radius for warnings
+      // Warnings are more localized - be very conservative
+      maxDistance = 25; // Reduced from 75km to 25km radius for warnings
       console.log(`⚠️ Warning alert detected - using ${maxDistance}km radius`);
     } else {
-      // Default for other alert types
-      maxDistance = 100; // 100km radius for other alerts
+      // Default for other alert types - be conservative
+      maxDistance = 35; // Reduced from 100km to 35km radius for other alerts
       console.log(`📢 Other alert type - using ${maxDistance}km radius`);
     }
     
@@ -190,7 +196,7 @@ function isLocationInAlertArea(userLat: number, userLon: number, alertGeometry: 
     return isWithinDistance;
   }
   
-  console.log(`❌ No valid geometry coordinates found`);
+  console.log(`❌ No valid geometry coordinates or area description found`);
   return false;
 }
 
@@ -321,13 +327,23 @@ function _isLocationInAreaDescription(userLat: number, userLon: number, areaDesc
   console.log(`📍 User appears to be near ${closestLocation} (${closestDistance.toFixed(1)}km away)`);
   console.log(`🏛️ User's counties: ${userCounties.join(', ')}`);
   
-  // Check if any of the user's counties are mentioned in the areaDesc
-  const areaDescLower = areaDesc.toLowerCase();
+  // Check if any of the user's counties are mentioned in the areaDesc using strict word boundaries
   for (const county of userCounties) {
-    if (areaDescLower.includes(county.toLowerCase())) {
+    const escapedCounty = county.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const countyWordRegex = new RegExp(`\\b${escapedCounty}\\b`, 'i');
+    const countyWithSuffixRegex = new RegExp(`\\b${escapedCounty}\\s+county\\b`, 'i');
+    
+    if (countyWordRegex.test(areaDesc) || countyWithSuffixRegex.test(areaDesc)) {
       console.log(`✅ User's county "${county}" found in alert area`);
       return true;
     }
+  }
+  
+  // Additional check for "South Dakota" or "SD" to ensure we're in the right state
+  const stateRegex = /\b(south dakota|sd)\b/i;
+  if (stateRegex.test(areaDesc)) {
+    console.log(`📍 Alert is for South Dakota, but user's specific counties not found`);
+    return false; // Be conservative for state-wide alerts
   }
   
   console.log(`❌ User's counties not found in alert area`);
@@ -456,6 +472,7 @@ async function sendNotificationsForAlert(alert: any, db: admin.firestore.Firesto
     console.log(`🚨 Processing alert: ${alert.properties.event}`);
     console.log(`📍 Alert area: ${alert.properties.areaDesc}`);
     console.log(`🆔 Alert ID: ${alert.id}`);
+    console.log(`🗺️ Alert geometry type: ${alert.geometry?.type || 'none'}`);
     
     const usersSnapshot = await db.collection('users').get();
     console.log(`🔍 Checking ${usersSnapshot.docs.length} users for alert: ${alert.properties.event}`);
@@ -465,11 +482,13 @@ async function sendNotificationsForAlert(alert: any, db: admin.firestore.Firesto
       return;
     }
     
+    let usersInArea = 0;
+    let usersNotified = 0;
+    
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
       const userData = userDoc.data();
-      console.log(`👤 Processing user: ${userId}`);
-      console.log(`   User data:`, JSON.stringify(userData, null, 2));
+      console.log(`\n👤 Processing user: ${userId}`);
       
       const userLocation = userData.currentLocation;
       if (!userLocation) {
@@ -502,21 +521,35 @@ async function sendNotificationsForAlert(alert: any, db: admin.firestore.Firesto
       }
       
       const userPrefs = prefsDoc.data();
-      console.log(`📋 User preferences:`, JSON.stringify(userPrefs, null, 2));
       
       const userLat = userLocation.lat;
       const userLon = userLocation.lon;
       
       console.log(`📍 Checking user ${userId} at (${userLat}, ${userLon}) for alert: ${alert.properties.event}`);
-      console.log(`🗺️ Alert geometry:`, JSON.stringify(alert.geometry, null, 2));
       
       if (isLocationInAlertArea(userLat, userLon, alert.geometry, alert.properties.event, alert.properties.areaDesc)) {
         console.log(`✅ User ${userId} is in alert area for ${alert.properties.event}`);
-        await sendNotificationToUser(userId, alert.properties, userPrefs);
+        usersInArea++;
+        
+        // Check if notification should be sent based on preferences
+        const currentHour = new Date().getHours();
+        if (shouldSendNotification(userPrefs, alert.properties.event, currentHour)) {
+          await sendNotificationToUser(userId, alert.properties, userPrefs);
+          usersNotified++;
+          console.log(`📱 Notification sent to user ${userId}`);
+        } else {
+          console.log(`⏸️ Notification blocked by preferences for user ${userId}`);
+        }
       } else {
         console.log(`❌ User ${userId} is NOT in alert area for ${alert.properties.event}`);
       }
     }
+    
+    console.log(`\n📊 Alert Summary for ${alert.properties.event}:`);
+    console.log(`   Users in alert area: ${usersInArea}`);
+    console.log(`   Notifications sent: ${usersNotified}`);
+    console.log(`   Users checked: ${usersSnapshot.docs.length}`);
+    
   } catch (error) {
     console.error('❌ Error sending notifications for alert:', error);
     console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
@@ -536,6 +569,7 @@ function sanitizeAlertId(alertId: string): string {
 
 export const pollNWSAlerts = functions.pubsub.schedule("every 5 minutes").onRun(async (context: any) => {
   console.log(`🔄 Starting NWS alert polling at ${new Date().toISOString()}`);
+  console.log(`📍 Enhanced county-based filtering enabled - users will only receive alerts for their specific counties`);
   
   // 1. Fetch NWS alerts for South Dakota
   const url = "https://api.weather.gov/alerts/active?area=SD";
@@ -742,3 +776,6 @@ export const loadNotificationHistory = functions.https.onRequest(async (req, res
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Export the weather chat function
+export { weatherChat } from './weather_chat';

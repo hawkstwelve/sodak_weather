@@ -253,9 +253,11 @@ class WeatherService {
           'temperatureUnit': day['maxTemperature']?['unit'],
           'windSpeed': dayPart['wind']?['speed']?['value'],
           'windDirection': dayPart['wind']?['direction']?['degrees'],
+          'windGust': dayPart['wind']?['gust']?['value'],
           'precipProbability':
               dayPart['precipitation']?['probability']?['percent'],
           'cloudCover': dayPart['cloudCover'],
+          'relativeHumidity': dayPart['relativeHumidity'],
           'shortForecast': weatherCondition['description']?['text'],
           'detailedForecast': weatherCondition['description']?['text'],
           'icon': weatherCondition['iconBaseUri'],
@@ -275,9 +277,11 @@ class WeatherService {
           'temperatureUnit': day['minTemperature']?['unit'],
           'windSpeed': nightPart['wind']?['speed']?['value'],
           'windDirection': nightPart['wind']?['direction']?['degrees'],
+          'windGust': nightPart['wind']?['gust']?['value'],
           'precipProbability':
               nightPart['precipitation']?['probability']?['percent'],
           'cloudCover': nightPart['cloudCover'],
+          'relativeHumidity': nightPart['relativeHumidity'],
           'shortForecast': nightWeatherCondition['description']?['text'],
           'detailedForecast': nightWeatherCondition['description']?['text'],
           'icon': nightWeatherCondition['iconBaseUri'],

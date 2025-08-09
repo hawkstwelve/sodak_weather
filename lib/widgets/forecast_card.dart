@@ -202,7 +202,15 @@ class ForecastCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
-              'Wind: ${_formatWind(dayPeriod!.windSpeed, dayPeriod!.windDirection)}',
+              'Wind: ${_formatWind(dayPeriod!.windSpeed, dayPeriod!.windDirection, dayPeriod!.windGust)}',
+              style: AppTheme.bodyMedium,
+            ),
+          ),
+        if (dayPeriod!.relativeHumidity != null)
+          Padding(
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
+            child: Text(
+              'Humidity: ${dayPeriod!.relativeHumidity}%',
               style: AppTheme.bodyMedium,
             ),
           ),
@@ -214,7 +222,6 @@ class ForecastCard extends StatelessWidget {
               style: AppTheme.bodyMedium,
             ),
           ),
-        if (dayPeriod!.detailedForecast.isNotEmpty) const SizedBox(height: UIConstants.spacingStandard),
         // Thunderstorm probability
         if (dayPeriod!.thunderstormProbability != null)
           Padding(
@@ -271,7 +278,15 @@ class ForecastCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
             child: Text(
-              'Wind: ${_formatWind(nightPeriod!.windSpeed, nightPeriod!.windDirection)}',
+              'Wind: ${_formatWind(nightPeriod!.windSpeed, nightPeriod!.windDirection, nightPeriod!.windGust)}',
+              style: AppTheme.bodyMedium,
+            ),
+          ),
+        if (nightPeriod!.relativeHumidity != null)
+          Padding(
+            padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
+            child: Text(
+              'Humidity: ${nightPeriod!.relativeHumidity}%',
               style: AppTheme.bodyMedium,
             ),
           ),
@@ -296,18 +311,27 @@ class ForecastCard extends StatelessWidget {
     );
   }
 
-  String _formatWind(String windSpeed, String windDirection) {
-    // Try to parse windSpeed as double (assume it's in mph from API)
-    double? speed = double.tryParse(windSpeed);
-    String speedStr = speed != null
-        ? '${speed.toStringAsFixed(0)} mph'
-        : windSpeed;
+  String _formatWind(String windSpeed, String windDirection, double? windGust) {
+    final double? parsedSpeed = double.tryParse(windSpeed);
+    final String speedStr = parsedSpeed != null ? '${parsedSpeed.toStringAsFixed(0)} mph' : windSpeed;
     String dirStr = '';
-    int? deg = int.tryParse(windDirection);
+    final int? deg = int.tryParse(windDirection);
     if (deg != null) {
-      dirStr = ' ${_degreesToCompass(deg)}';
+      dirStr = _degreesToCompass(deg);
     }
-    return speedStr + dirStr;
+    String result = '';
+    if (dirStr.isNotEmpty) {
+      result += dirStr;
+    }
+    if (speedStr.isNotEmpty) {
+      result += result.isNotEmpty ? ' ' : '';
+      result += speedStr;
+    }
+    if (windGust != null) {
+      result += result.isNotEmpty ? ' • ' : '';
+      result += 'G ${windGust.toStringAsFixed(0)} mph';
+    }
+    return result.isNotEmpty ? result : 'Calm';
   }
 
   String _degreesToCompass(int degrees) {
