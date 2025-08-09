@@ -23,10 +23,6 @@ This release brings a chat-based weather experience, agriculture insights, and s
   - Navigation updated to include new features
 - Dependencies upgraded
 
-## Setup Notes
-
-- Follow API_SETUP.md to configure your own API keys locally. Ensure lib/config/api_config.dart, Firebase configuration files, and lib/firebase_options.dart remain untracked.
-
 ## Android APK
 
 - A release APK is attached to this GitHub release.
