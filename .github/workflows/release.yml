@@ -5,6 +5,15 @@ on:
     tags:
       - 'v*' # Trigger on version tags like v1.0.0, v1.1.0, etc.
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name to create/update release for (e.g., v4.0.0)'
+        required: false
+        type: string
+      notes_path:
+        description: 'Path to markdown file for release notes'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -94,3 +103,16 @@ jobs:
         with:
           name: app-release-apk
           path: ./build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Create/Update Release from manual run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.tag != '' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.tag }}
+          files: ./build/app/outputs/flutter-apk/app-release.apk
+          name: South Dakota Weather App ${{ inputs.tag }}
+          body_path: ${{ inputs.notes_path != '' && inputs.notes_path || format('RELEASE_NOTES_{0}.md', inputs.tag) }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
