@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*' # Trigger on version tags like v1.0.0, v1.1.0, etc.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -76,41 +77,20 @@ jobs:
         run: flutter build apk --release
         
       - name: Create Release and Upload APK
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: ./build/app/outputs/flutter-apk/app-release.apk
           name: South Dakota Weather App ${{ github.ref_name }}
-          body: |
-            ## South Dakota Weather App ${{ github.ref_name }}
-            
-            ### What's New in v2.0.0
-            - **Advanced Location Services** - GPS-based weather with smart caching
-            - **Centralized Navigation System** - Easier to maintain and extend
-            - **Enhanced Security** - Consolidated API key management
-            - **Professional Charts** - SyncFusion charts without watermarks
-            - **Improved Performance** - Location caching and optimized builds
-            
-            ### Features
-            - Real-time weather data for South Dakota cities and GPS location
-            - National Weather Service alerts
-            - Hourly and daily forecasts
-            - Weather radar with interactive maps
-            - Area Forecast Discussions (AFD)
-            - Storm Prediction Center outlooks
-            - Historical weather almanac
-            - Smart location caching for faster loading
-            
-            ### Installation
-            1. Download the APK file above
-            2. Enable "Install from Unknown Sources" in your Android settings
-            3. Install the APK file
-            
-            ### System Requirements
-            - Android 5.0 (API level 21) or higher
-            
-            ### Support
-            If you encounter any issues, please report them on the GitHub repository.
+          body_path: RELEASE_NOTES_${{ github.ref_name }}.md
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK artifact (non-tag runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: ./build/app/outputs/flutter-apk/app-release.apk
