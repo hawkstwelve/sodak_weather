@@ -15,16 +15,18 @@ import 'screens/onboarding_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/notification_service.dart';
 import 'services/backend_service.dart';
-import 'firebase_options.dart';
+// Firebase options are intentionally not hard-coded to avoid exposing secrets in CI
 
 Future<void> main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase first
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase if default platform configuration is available
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    // Skip Firebase initialization when configuration is not present (e.g., CI)
+  }
   
   await FMTCObjectBoxBackend().initialise();
 

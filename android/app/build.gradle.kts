@@ -3,13 +3,12 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.sodak_weather.app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    // Do not pin NDK version to improve CI compatibility
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -54,5 +53,13 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// Apply Google Services plugin only if configuration file exists (helps CI builds without secrets)
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    println("[Gradle] Google Services plugin applied (google-services.json found)")
+} else {
+    println("[Gradle] Google Services plugin NOT applied (google-services.json missing)")
 }
 
