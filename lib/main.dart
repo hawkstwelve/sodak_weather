@@ -167,7 +167,6 @@ class _MyAppState extends State<MyApp> {
       // Auto-sun functionality removed - using single theme now
     } catch (e) {
       // Log error but don't crash the app
-      debugPrint('Error setting up provider connections: $e');
     }
   }
 

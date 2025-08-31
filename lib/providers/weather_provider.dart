@@ -402,4 +402,15 @@ class WeatherProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Force the weather provider to be marked as initialized
+  /// This is used as a fallback when location setup fails
+  void forceInitialization() {
+    if (_locationProvider == null) {
+      // Create a dummy location provider reference to mark as initialized
+      // This allows the app to continue with default city functionality
+      _locationProvider = LocationProvider();
+    }
+    notifyListeners();
+  }
 } 

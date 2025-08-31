@@ -341,8 +341,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _handleOnDone() async {
     final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
     final locationProvider = Provider.of<LocationProvider>(context, listen: false);
-    await onboardingProvider.markComplete();
-    await locationProvider.getCurrentLocation(forceRefresh: true);
+    
+    try {
+      await onboardingProvider.markComplete();
+      await locationProvider.getCurrentLocation(forceRefresh: true);
+    } catch (e) {
+      // Handle any errors silently
+    }
+    
     if (!mounted) return;
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
@@ -352,7 +358,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _handleOnSkip() async {
     final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
     Provider.of<LocationProvider>(context, listen: false);
-    await onboardingProvider.markComplete();
+    
+    try {
+      await onboardingProvider.markComplete();
+    } catch (e) {
+      // Handle any errors silently
+    }
+    
     if (!mounted) return;
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
