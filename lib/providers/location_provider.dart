@@ -48,15 +48,23 @@ class LocationProvider with ChangeNotifier {
 
   /// Initialize location services and check permissions
   Future<void> _initializeLocation() async {
-    _permissionStatus = await LocationService.checkPermission();
-    
-    // Try to load cached location on initialization
-    await _loadCachedLocation();
-    
-    if (!_initializationCompleter.isCompleted) {
-      _initializationCompleter.complete();
+    try {
+      _permissionStatus = await LocationService.checkPermission();
+      
+      // Try to load cached location on initialization
+      await _loadCachedLocation();
+      
+      if (!_initializationCompleter.isCompleted) {
+        _initializationCompleter.complete();
+      }
+    } catch (e) {
+      // In release builds, ensure initialization completes even if there are errors
+      if (!_initializationCompleter.isCompleted) {
+        _initializationCompleter.complete();
+      }
+    } finally {
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   /// Load cached location if available

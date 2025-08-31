@@ -29,6 +29,7 @@ class OnboardingProvider with ChangeNotifier {
       _notificationPermissionRequested = prefs.getBool(_notificationPermissionRequestedKey) ?? false;
     } catch (e) {
       // If there's an error loading preferences, assume onboarding is not complete
+      // This is especially important for release builds where errors might be handled differently
       _isComplete = false;
       _locationPermissionRequested = false;
       _notificationPermissionRequested = false;

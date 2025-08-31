@@ -127,46 +127,103 @@ class _MyAppState extends State<MyApp> {
       final locationProvider = Provider.of<LocationProvider>(context, listen: false);
       final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
 
-      // Initialize onboarding provider
-      onboardingProvider.initialize();
+      // Initialize onboarding provider with timeout protection
+      try {
+        onboardingProvider.initialize();
+      } catch (e) {
+        // Continue even if onboarding initialization fails
+      }
 
-      // Set up weather provider with location provider
-      await weatherProvider.setLocationProvider(locationProvider);
+      // Set up weather provider with location provider with timeout protection
+      try {
+        await weatherProvider.setLocationProvider(locationProvider).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            // Force weather provider to be initialized even if location setup fails
+            weatherProvider.forceInitialization();
+          },
+        );
+      } catch (e) {
+        // Force weather provider to be initialized even if location setup fails
+        weatherProvider.forceInitialization();
+      }
 
       // Refresh location permissions to ensure we have the latest state
-      await locationProvider.refreshPermissionStatus();
+      try {
+        await locationProvider.refreshPermissionStatus().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            // Continue without location permissions
+          },
+        );
+      } catch (e) {
+        // Continue without location permissions
+      }
 
       // Set up notification service with providers
-      notificationService.setProviders(
-        preferencesProvider: preferencesProvider,
-        weatherProvider: weatherProvider,
-        locationProvider: locationProvider,
-      );
+      try {
+        notificationService.setProviders(
+          preferencesProvider: preferencesProvider,
+          weatherProvider: weatherProvider,
+          locationProvider: locationProvider,
+        );
 
-      // Initialize notification service
-      notificationService.initialize();
+        // Initialize notification service with timeout protection
+        await notificationService.initialize().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            // Continue without notification service
+          },
+        );
+      } catch (e) {
+        // Continue without notification service
+      }
 
-      // Sync current location with backend for notifications
-      notificationService.syncLocationWithBackend();
+      // Sync current location with backend for notifications (non-blocking)
+      try {
+        notificationService.syncLocationWithBackend();
+      } catch (e) {
+        // Continue without backend sync
+      }
 
-      // Listen for location changes
+      // Listen for location changes with error protection
       weatherProvider.addListener(() {
-        notificationService.onLocationChanged();
+        try {
+          notificationService.onLocationChanged();
+        } catch (e) {
+          // Ignore listener errors
+        }
       });
 
       locationProvider.addListener(() {
-        // Sync location with backend when location provider changes
-        notificationService.onLocationChanged();
+        try {
+          // Sync location with backend when location provider changes
+          notificationService.onLocationChanged();
+        } catch (e) {
+          // Ignore listener errors
+        }
       });
 
-      // Initial location sync
+      // Initial location sync (non-blocking)
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        notificationService.onLocationChanged();
+        try {
+          notificationService.onLocationChanged();
+        } catch (e) {
+          // Ignore initial sync errors
+        }
       });
 
       // Auto-sun functionality removed - using single theme now
     } catch (e) {
-      // Log error but don't crash the app
+      // Ensure weather provider is initialized even if everything else fails
+      try {
+        final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+        if (!weatherProvider.isInitialized) {
+          weatherProvider.forceInitialization();
+        }
+      } catch (e2) {
+        // Last resort - continue anyway
+      }
     }
   }
 
@@ -197,12 +254,48 @@ class _MyAppState extends State<MyApp> {
                       builder: (context, weatherProvider, child) {
                         // Show loading until weather provider is properly initialized
                         if (!weatherProvider.isInitialized) {
-                          return Scaffold(
-                            body: Center(
-                              child: CircularProgressIndicator(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                            ),
+                          // Add a timeout fallback to prevent infinite loading in release builds
+                          return FutureBuilder(
+                            future: Future.delayed(const Duration(seconds: 20)),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.done) {
+                                // Force initialization after timeout to prevent infinite loading
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (!weatherProvider.isInitialized) {
+                                    weatherProvider.forceInitialization();
+                                  }
+                                });
+                              }
+                              
+                              return Scaffold(
+                                body: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        color: Theme.of(context).colorScheme.secondary,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Initializing weather data...',
+                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      if (snapshot.connectionState == ConnectionState.done) ...[
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'Taking longer than expected...',
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         }
                         return const MainAppContainer();
