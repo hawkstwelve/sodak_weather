@@ -4,7 +4,7 @@ import 'package:sodak_weather/widgets/glass/glass_container.dart';
 import '../models/sd_city.dart';
 import '../providers/weather_provider.dart';
 import '../services/afd_service.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../constants/ui_constants.dart';
 
 class AFDScreen extends StatefulWidget {
@@ -78,20 +78,12 @@ class _AFDScreenState extends State<AFDScreen> {
     return Selector<WeatherProvider, String?>(
       selector: (context, provider) => provider.weatherData?.currentConditions?.textDescription,
       builder: (context, condition, child) {
-        final gradientColors = AppTheme.getGradientForCondition(condition);
-        
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: gradientColors,
-            ),
-          ),
-          child: SafeArea(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor))
-                : Center(
+        return SafeArea(
+          child: _isLoading
+              ? Builder(builder: (context) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)))
+              : Padding(
+                  padding: const EdgeInsets.only(top: UIConstants.spacingLarge),
+                  child: Center(
                     child: FractionallySizedBox(
                       widthFactor: 0.92,
                       child: ConstrainedBox(
@@ -100,7 +92,7 @@ class _AFDScreenState extends State<AFDScreen> {
                           useBlur: false,
                           padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
                           child: _errorMessage != null
-                              ? Text(_errorMessage!, style: AppTheme.bodyMedium)
+                              ? Builder(builder: (context) => Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium))
                               : RefreshIndicator(
                                   onRefresh: _refreshAFD,
                                   child: SingleChildScrollView(
@@ -108,12 +100,7 @@ class _AFDScreenState extends State<AFDScreen> {
                                       width: double.infinity,
                                       child: SizedBox(
                                         width: double.infinity,
-                                        child: SelectableText(
-                                          _cleanAfdText(_afdText ?? 'No AFD available.'),
-                                          style: AppTheme.bodyMedium,
-                                          textAlign: TextAlign.left,
-                                          textDirection: TextDirection.ltr,
-                                        ),
+                                        child: Builder(builder: (context) => SelectableText(_cleanAfdText(_afdText ?? 'No AFD available.'), style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.left, textDirection: TextDirection.ltr)),
                                       ),
                                     ),
                                   ),
@@ -122,7 +109,7 @@ class _AFDScreenState extends State<AFDScreen> {
                       ),
                     ),
                   ),
-          ),
+                ),
         );
       },
     );

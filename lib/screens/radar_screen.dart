@@ -7,7 +7,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../models/sd_city.dart';
 import '../providers/weather_provider.dart';
-import '../theme/app_theme.dart';
+import '../providers/location_provider.dart';
+// import '../theme/app_theme.dart';
 import '../services/rainviewer_api.dart';
 import '../config/api_config.dart';
 import '../utils/hour_utils.dart';
@@ -39,6 +40,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
 
   final MapController _mapController = MapController();
   late SDCity _currentCity; // Local state to hold the city from the provider
+  bool _isUsingLocation = false; // Track if we're using GPS location
   String? _rainviewerHost;
   List<RadarFrameInfo> _pastRadarFrames = [];
   int _currentFrameIndex = 0;
@@ -57,7 +59,9 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Initialize with a default city from the provider, but don't listen here.
-    _currentCity = Provider.of<WeatherProvider>(context, listen: false).selectedCity;
+    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+    _currentCity = weatherProvider.selectedCity;
+    _isUsingLocation = weatherProvider.isUsingLocation;
     _initializeRadarStore();
     _loadRadarData();
     _refreshDataTimer = Timer.periodic(
@@ -69,17 +73,39 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final SDCity newCity = Provider.of<WeatherProvider>(context).selectedCity;
+    final weatherProvider = Provider.of<WeatherProvider>(context);
+    final locationProvider = Provider.of<LocationProvider>(context);
+    final SDCity newCity = weatherProvider.selectedCity;
     
-    // This is the core logic from the old didUpdateWidget.
-    // It runs only when the city from the provider has changed.
+    // Check if city has changed
     if (_currentCity.name != newCity.name) {
       _currentCity = newCity;
       _resetAnimationState();
-      // Update map center to new city
-      final newCenter = LatLng(_currentCity.latitude, _currentCity.longitude);
-      _mapController.move(newCenter, _initialZoom);
+      // Update map center to new city - defer until after frame is built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final newCenter = LatLng(_currentCity.latitude, _currentCity.longitude);
+          _mapController.move(newCenter, _initialZoom);
+        }
+      });
       _loadRadarData();
+    }
+    
+    // Check if location usage has changed (e.g., switched from city to GPS)
+    if (weatherProvider.isUsingLocation != _isUsingLocation) {
+      _isUsingLocation = weatherProvider.isUsingLocation;
+      if (_isUsingLocation && locationProvider.currentLocation != null) {
+        // Center map on current GPS location - defer until after frame is built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            final newCenter = LatLng(
+              locationProvider.currentLocation!.latitude,
+              locationProvider.currentLocation!.longitude,
+            );
+            _mapController.move(newCenter, _initialZoom);
+          }
+        });
+      }
     }
   }
 
@@ -123,6 +149,9 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
   }
 
   Future<void> _loadRadarData() async {
+    // Check if widget is still mounted before calling setState
+    if (!mounted) return;
+    
     setState(() {
       _isLoadingFrames = true;
       _framesErrorMessage = null;
@@ -200,31 +229,16 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final List<Color> gradientColors = AppTheme.getGradientForCondition(
-      widget.weatherCondition,
-    );
-    
     return _buildMainContainer(
-      gradientColors: gradientColors,
       child: _buildRadarContent(context),
     );
   }
 
   /// Builds the main container with gradient background
   Widget _buildMainContainer({
-    required List<Color> gradientColors,
     required Widget child,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradientColors,
-        ),
-      ),
-      child: SafeArea(child: child),
-    );
+    return SafeArea(child: child);
   }
 
   /// Builds the main radar content with map and controls
@@ -260,10 +274,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
 
   /// Builds the loading indicator
   Widget _buildLoadingIndicator() {
-    return const Center(
-      key: ValueKey('radar_loading'),
-      child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor),
-    );
+    return Builder(builder: (context) => Center(key: const ValueKey('radar_loading'), child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))));
   }
 
   /// Builds the error widget
@@ -305,6 +316,7 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
         _buildBaseMapLayer(baseMapUrl),
         if (_pastRadarFrames.isNotEmpty && _rainviewerHost != null)
           ..._buildRadarLayers(),
+        _buildLocationMarker(),
       ],
     );
   }
@@ -347,6 +359,93 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     }).toList();
   }
 
+  /// Builds the location marker layer
+  Widget _buildLocationMarker() {
+    return Consumer2<WeatherProvider, LocationProvider>(
+      builder: (context, weatherProvider, locationProvider, child) {
+        // Determine the location to show
+        LatLng markerLocation;
+        String markerTitle;
+        
+        if (weatherProvider.isUsingLocation && locationProvider.currentLocation != null) {
+          // Use current GPS coordinates
+          markerLocation = LatLng(
+            locationProvider.currentLocation!.latitude,
+            locationProvider.currentLocation!.longitude,
+          );
+          markerTitle = 'Current Location';
+          
+          // Update local state to track location usage
+          if (!_isUsingLocation) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _isUsingLocation = true;
+                });
+              }
+            });
+          }
+        } else {
+          // Use selected city coordinates
+          markerLocation = LatLng(_currentCity.latitude, _currentCity.longitude);
+          markerTitle = _currentCity.name;
+          
+          // Update local state to track location usage
+          if (_isUsingLocation) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _isUsingLocation = false;
+                });
+              }
+            });
+          }
+        }
+        
+        return MarkerLayer(
+          markers: [
+            Marker(
+              point: markerLocation,
+              width: UIConstants.mapMarkerSize,
+              height: UIConstants.mapMarkerSize,
+              child: Tooltip(
+                message: markerTitle,
+                child: GestureDetector(
+                  onTap: () {
+                    // Center the map on the marker location
+                    _mapController.move(markerLocation, _initialZoom);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.8),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.location_on,
+                      color: Colors.white,
+                      size: UIConstants.mapMarkerSize * 0.67, // Proportional to marker size
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildControls(BuildContext context) {
     if (_isLoadingFrames || _pastRadarFrames.isEmpty) {
       return const SizedBox.shrink();
@@ -355,18 +454,20 @@ class _RadarPageState extends State<RadarPage> with WidgetsBindingObserver {
     final frame = _pastRadarFrames[_currentFrameIndex];
     final timeStr = _formatUnixToLocal(frame.time);
 
-    return Card(
-      color: Colors.black.withValues(alpha: 0.7),
-      margin: const EdgeInsets.all(UIConstants.spacingXLarge),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(UIConstants.spacingXLarge)),
-      child: Padding(
-        padding: const EdgeInsets.all(UIConstants.spacingLarge),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildAnimationControls(timeStr),
-            _buildOpacityControls(),
-          ],
+    return RepaintBoundary(
+      child: Card(
+        color: Colors.black.withValues(alpha: 0.7),
+        margin: const EdgeInsets.all(UIConstants.spacingXLarge),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(UIConstants.spacingXLarge)),
+        child: Padding(
+          padding: const EdgeInsets.all(UIConstants.spacingLarge),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildAnimationControls(timeStr),
+              _buildOpacityControls(),
+            ],
+          ),
         ),
       ),
     );

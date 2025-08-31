@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/nws_alert_model.dart';
 import '../constants/ui_constants.dart';
+import 'glass/glass_card.dart';
 
 class NwsAlertBanner extends StatefulWidget {
   final List<NwsAlertFeature> alerts;
-  const NwsAlertBanner({Key? key, required this.alerts}) : super(key: key);
+  const NwsAlertBanner({super.key, required this.alerts});
 
   @override
   State<NwsAlertBanner> createState() => _NwsAlertBannerState();
@@ -20,18 +21,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
     _expanded = List.generate(widget.alerts.length, (_) => false);
   }
 
-  Color _getBannerColor(String? severity) {
-    if (severity == null) return Colors.yellow.shade700;
-    switch (severity.toLowerCase()) {
-      case 'severe':
-      case 'extreme':
-        return const Color(0x99B71C1C);
-      case 'moderate':
-        return Colors.yellow.shade700;
-      default:
-        return Colors.yellow.shade700;
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -41,25 +31,17 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
         ...List.generate(widget.alerts.length, (i) {
           final alert = widget.alerts[i];
           final props = alert.properties;
-          final color = _getBannerColor(props?.severity);
-          return AnimatedContainer(
-            duration: UIConstants.animationFast,
+          return Container(
             margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingSmall),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(UIConstants.spacingXLarge), // More rounded corners
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: UIConstants.spacingSmall,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
+            child: GlassCard(
+              priority: GlassCardPriority.alert, // High priority for weather alerts
+              enablePressEffect: true,
+              borderRadius: BorderRadius.circular(UIConstants.borderRadiusStandard),
+              contentPadding: EdgeInsets.zero,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(UIConstants.spacingXLarge), // Match card rounding
+                borderRadius: BorderRadius.circular(UIConstants.borderRadiusStandard), // Match glass card rounding
                 onTap: () {
                   setState(() {
                     _expanded[i] = !_expanded[i];
@@ -145,6 +127,7 @@ class _NwsAlertBannerState extends State<NwsAlertBanner> {
                   ),
                 ),
               ),
+            ),
             ),
           );
         }),

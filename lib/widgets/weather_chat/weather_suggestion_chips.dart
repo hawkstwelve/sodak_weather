@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+// import '../../theme/app_theme.dart';
 import '../glass/glass_card.dart';
 import '../../constants/ui_constants.dart';
 
@@ -16,7 +16,7 @@ class WeatherSuggestionChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 32,
+      height: 40, // Increased from 32 to 40 to ensure text visibility
       padding: const EdgeInsets.symmetric(horizontal: UIConstants.spacingLarge),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -27,19 +27,20 @@ class WeatherSuggestionChips extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onSuggestionTap(suggestions[index]),
               child: GlassCard(
-                useBlur: true,
-                opacity: UIConstants.opacityVeryLow,
+                priority: GlassCardPriority.prominent,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: UIConstants.spacingMedium,
+                  vertical: UIConstants.spacingSmall, // Increased from spacingTiny
+                ),
                 child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: UIConstants.spacingMedium,
-                      vertical: UIConstants.spacingTiny,
-                    ),
-                    child: Text(
-                      suggestions[index],
-                      style: AppTheme.bodyMedium.copyWith(fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
+                  child: Text(
+                    suggestions[index], 
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 12,
+                      color: Colors.white, // Explicitly set white text color
+                      fontWeight: FontWeight.w500, // Make text slightly bolder for better visibility
+                    ), 
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/soil_moisture_provider.dart';
 import '../widgets/glass/glass_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../constants/ui_constants.dart';
 
 /// Widget for displaying soil moisture information in a glass card
@@ -38,22 +38,17 @@ class SoilMoistureCard extends StatelessWidget {
 
   Widget _buildLoadingCard() {
     return GlassCard(
-      useBlur: false,
-      opacity: UIConstants.opacityLow,
+      priority: GlassCardPriority.standard,
+
       child: Container(
         padding: const EdgeInsets.all(UIConstants.spacingXLarge),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.loadingIndicatorColor),
-              ),
+              Builder(builder: (context) => CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
               const SizedBox(height: UIConstants.spacingLarge),
-              Text(
-                'Loading soil moisture data...',
-                style: AppTheme.bodyMedium,
-              ),
+              Builder(builder: (context) => Text('Loading soil moisture data...', style: Theme.of(context).textTheme.bodyMedium)),
             ],
           ),
         ),
@@ -63,30 +58,18 @@ class SoilMoistureCard extends StatelessWidget {
 
   Widget _buildErrorCard(BuildContext context, SoilMoistureProvider provider) {
     return GlassCard(
-      useBlur: false,
-      opacity: UIConstants.opacityLow,
+      priority: GlassCardPriority.standard,
+
       child: Container(
         padding: const EdgeInsets.all(UIConstants.spacingXLarge),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: AppTheme.textMedium,
-              size: UIConstants.iconSizeMedium,
-            ),
+            Builder(builder: (context) => Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), size: UIConstants.iconSizeMedium)),
             const SizedBox(height: UIConstants.spacingLarge),
-            Text(
-              'Failed to load soil moisture data',
-              style: AppTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
+            Builder(builder: (context) => Text('Failed to load soil moisture data', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center)),
             const SizedBox(height: UIConstants.spacingMedium),
-            Text(
-              provider.errorMessage ?? 'Unknown error',
-              style: AppTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
+            Builder(builder: (context) => Text(provider.errorMessage ?? 'Unknown error', style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center)),
             const SizedBox(height: UIConstants.spacingLarge),
             TextButton(
               onPressed: () {
@@ -103,30 +86,22 @@ class SoilMoistureCard extends StatelessWidget {
 
   Widget _buildEmptyCard(BuildContext context, SoilMoistureProvider provider) {
     return GlassCard(
-      useBlur: false,
-      opacity: UIConstants.opacityLow,
+      priority: GlassCardPriority.standard,
+
       child: Container(
         padding: const EdgeInsets.all(UIConstants.spacingXLarge),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.water_drop_outlined,
-              color: AppTheme.textMedium,
-              size: UIConstants.iconSizeMedium,
-            ),
+            Builder(builder: (context) => Icon(Icons.water_drop_outlined, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), size: UIConstants.iconSizeMedium)),
             const SizedBox(height: UIConstants.spacingLarge),
             Text(
               'Soil Moisture',
-              style: AppTheme.headingSmall,
+              style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: UIConstants.spacingMedium),
-            Text(
-              'NASA SPoRT soil moisture data for the Dakotas',
-              style: AppTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text('NASA SPoRT soil moisture data for the Dakotas', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
             const SizedBox(height: UIConstants.spacingLarge),
             ElevatedButton(
               onPressed: () => provider.fetchSoilMoistureData(),
@@ -142,8 +117,8 @@ class SoilMoistureCard extends StatelessWidget {
     final urls = provider.soilMoistureUrls!;
     
     return GlassCard(
-      useBlur: false,
-      opacity: UIConstants.opacityLow,
+      priority: GlassCardPriority.standard,
+
       child: Container(
         padding: const EdgeInsets.all(UIConstants.spacingXLarge),
         child: Column(
@@ -151,7 +126,7 @@ class SoilMoistureCard extends StatelessWidget {
           children: [
             Text(
               'Soil Moisture',
-              style: AppTheme.headingSmall,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: UIConstants.spacingLarge),
             
@@ -163,7 +138,7 @@ class SoilMoistureCard extends StatelessWidget {
             // Data source info
             Text(
               'Updates every 24 hours',
-              style: AppTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             
             const SizedBox(height: UIConstants.spacingMedium),
@@ -175,10 +150,7 @@ class SoilMoistureCard extends StatelessWidget {
                 onPressed: () => _launchUrl(provider.getWebsiteUrl()),
                 icon: const Icon(Icons.open_in_new, size: UIConstants.iconSizeSmall),
                 label: const Text('View Full Data'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textLight,
-                  side: const BorderSide(color: AppTheme.textMedium),
-                ),
+                style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onSurface, side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
               ),
             ),
           ],
@@ -200,13 +172,7 @@ class SoilMoistureCard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${depth['label']} Percentile',
-              style: AppTheme.bodyBold.copyWith(
-                color: AppTheme.textMedium,
-                fontSize: 14,
-              ),
-            ),
+            Builder(builder: (context) => Text('${depth['label']} Percentile', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 14, fontWeight: FontWeight.bold))),
             const SizedBox(height: UIConstants.spacingSmall),
             Container(
               width: double.infinity,
@@ -225,12 +191,7 @@ class SoilMoistureCard extends StatelessWidget {
                           return Container(
                             color: Colors.transparent,
                             child: Center(
-                              child: CircularProgressIndicator(
-                                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.loadingIndicatorColor),
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
+                              child: Builder(builder: (context) => CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)), value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null)),
                             ),
                           );
                         },
@@ -241,15 +202,11 @@ class SoilMoistureCard extends StatelessWidget {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
-                                    Icons.error_outline,
-                                    color: AppTheme.textMedium,
-                                    size: UIConstants.iconSizeMedium,
-                                  ),
+                                  Builder(builder: (context) => Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), size: UIConstants.iconSizeMedium)),
                                   const SizedBox(height: UIConstants.spacingMedium),
                                   Text(
                                     'Failed to load map',
-                                    style: AppTheme.bodyMedium,
+                                    style: Theme.of(context).textTheme.bodyMedium,
                                   ),
                                 ],
                               ),
@@ -259,11 +216,7 @@ class SoilMoistureCard extends StatelessWidget {
                       )
                     : Container(
                         color: Colors.transparent,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.loadingIndicatorColor),
-                          ),
-                        ),
+                        child: Center(child: Builder(builder: (context) => CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))))),
                       ),
               ),
             ),

@@ -11,10 +11,12 @@ import '../widgets/daily_forecast_list_item.dart';
 import '../widgets/hourly_forecast_list_item.dart';
 import '../widgets/precipitation_chart.dart';
 import '../utils/weather_utils.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/nws_alert_banner.dart';
 import '../screens/radar_screen.dart';
 import '../widgets/radar_card.dart';
+
+
 import '../providers/weather_provider.dart';
 import '../constants/ui_constants.dart';
 
@@ -22,15 +24,15 @@ import '../constants/ui_constants.dart';
 const double kIconSizeLarge = UIConstants.iconSizeLarge * 2.5;
 const double kIconSizeMedium = UIConstants.iconSizeLarge;
 const double kIconSizeSmall = UIConstants.iconSizeMedium * 1.75;
-const double kCardPadding = UIConstants.spacingXXXLarge;
-const double kSpacingStandard = UIConstants.spacingXLarge;
-const double kSpacingSmall = UIConstants.spacingStandard;
+const double kCardPadding = UIConstants.spacingLarge; // Reduced from spacingXXXLarge
+const double kSpacingStandard = UIConstants.spacingLarge; // Reduced from spacingXLarge
+const double kSpacingSmall = UIConstants.spacingStandard; // Reduced from spacingStandard
 const double kForecastCardWidth = 110.0;
 const double kForecastCardHeight = UIConstants.cardHeightMedium;
 const double kHourlyForecastCardHeight = UIConstants.cardHeightLarge - 10;
 
 class _CollapsibleDetailsCard extends StatefulWidget {
-  const _CollapsibleDetailsCard({Key? key}) : super(key: key);
+  const _CollapsibleDetailsCard();
 
   @override
   State<_CollapsibleDetailsCard> createState() => _CollapsibleDetailsCardState();
@@ -47,20 +49,17 @@ class _CollapsibleDetailsCardState extends State<_CollapsibleDetailsCard> {
       firstChild: GestureDetector(
         onTap: () => setState(() => _isExpanded = true),
         child: GlassCard(
-          useBlur: false,
-          opacity: UIConstants.opacityLow,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: UIConstants.spacingLarge, horizontal: UIConstants.spacingXXLarge),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Current Conditions',
-                  style: AppTheme.bodyLarge,
-                ),
-                const Icon(Icons.expand_more, color: Colors.white),
-              ],
-            ),
+          priority: GlassCardPriority.standard,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: UIConstants.spacingXXXLarge, // 24.0px - more left/right padding
+            vertical: UIConstants.spacingLarge,    // 20.0px - keep top/bottom padding
+          ), // Increased from spacingXLarge to properly align with other cards
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Current Conditions', style: Theme.of(context).textTheme.bodyLarge),
+              Icon(Icons.expand_more, color: Theme.of(context).colorScheme.onSurface),
+            ],
           ),
         ),
       ),
@@ -88,26 +87,30 @@ Widget _buildDetailsCard(BuildContext context) {
           final items = [
             [
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.humidity, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.humidity, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'Humidity',
                 '${conditions.humidity ?? 'N/A'}%',
               ),
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.thermometer, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.thermometer, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'Dewpoint',
                 conditions.dewpoint != null
                     ? '${conditions.dewpoint!.round()}°'
                     : 'N/A',
               ),
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.rain, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.rain, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'Rain (24h)',
                 (additionalData['rain24hInches'] != null
                     ? '${additionalData['rain24hInches'].toStringAsFixed(2)} in'
                     : '0 in'),
               ),
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.strong_wind, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.strong_wind, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'Wind',
                 WeatherUtils.formatWind(
                   windDirection: conditions.windDirection,
@@ -118,58 +121,58 @@ Widget _buildDetailsCard(BuildContext context) {
             ],
             [
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.hot, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.hot, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'UV',
                 WeatherUtils.uvIndexDescription(conditions.uvIndex),
               ),
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.dust, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.dust, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'AQI',
                 _shortAqiCategory(additionalData['aqiCategory']) ?? 'N/A',
               ),
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.sunrise, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.sunrise, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'Sunrise',
                 sunrise != null ? WeatherPage._timeFormatter.format(sunrise) : 'N/A',
               ),
               _buildDetailItem(
-                const BoxedIcon(WeatherIcons.sunset, color: AppTheme.textLight, size: 28),
+                context,
+                Builder(builder: (context) => BoxedIcon(WeatherIcons.sunset, color: Theme.of(context).colorScheme.onSurface, size: 28)),
                 'Sunset',
                 sunset != null ? WeatherPage._timeFormatter.format(sunset) : 'N/A',
               ),
             ],
           ];
           return GlassCard(
-            useBlur: false,
-            opacity: UIConstants.opacityLow,
-            child: Padding(
-              padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-              child: Column(
-                children: [
-                  for (int row = 0; row < 2; row++) ...[
-                    Row(
-                      children: [
-                        for (int col = 0; col < 4; col++) ...[
-                          Expanded(child: items[row][col]),
-                          if (col < 3)
-                            Container(
-                              height: UIConstants.textFieldHeight,
-                              width: UIConstants.dividerHeight,
-                              color: const Color.fromRGBO(255, 255, 255, 0.12),
-                              margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingStandard),
-                            ),
-                        ],
+            priority: GlassCardPriority.standard,
+            child: Column(
+              children: [
+                for (int row = 0; row < 2; row++) ...[
+                  Row(
+                    children: [
+                      for (int col = 0; col < 4; col++) ...[
+                        Expanded(child: items[row][col]),
+                        if (col < 3)
+                          Container(
+                            height: UIConstants.textFieldHeight,
+                            width: UIConstants.dividerHeight,
+                            color: const Color.fromRGBO(255, 255, 255, 0.12),
+                            margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingStandard), // Reduced from spacingStandard
+                          ),
                       ],
+                    ],
+                  ),
+                  if (row == 0)
+                    Container(
+                      height: UIConstants.dividerHeight,
+                      color: const Color.fromRGBO(255, 255, 255, 0.12),
+                      margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingStandard), // Reduced from spacingStandard
                     ),
-                    if (row == 0)
-                      Container(
-                        height: UIConstants.dividerHeight,
-                        color: const Color.fromRGBO(255, 255, 255, 0.12),
-                        margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingStandard),
-                      ),
-                  ],
                 ],
-              ),
+              ],
             ),
           );
         },
@@ -178,19 +181,19 @@ Widget _buildDetailsCard(BuildContext context) {
   );
 }
 
-Widget _buildDetailItem(Widget icon, String label, String value) {
+Widget _buildDetailItem(BuildContext context, Widget icon, String label, String value) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: UIConstants.spacingTiny, vertical: UIConstants.spacingTiny),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         icon,
-        const SizedBox(height: UIConstants.spacingMedium),
-        Text(label, style: AppTheme.bodyBold),
+        const SizedBox(height: UIConstants.spacingSmall), // Reduced from spacingMedium
+        Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: UIConstants.spacingTiny),
         Text(
           value,
-          style: AppTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall,
           textAlign: TextAlign.center,
         ),
       ],
@@ -238,20 +241,7 @@ class WeatherPage extends StatelessWidget {
         return Selector<WeatherProvider, String?>(
           selector: (context, provider) => provider.weatherData?.currentConditions?.textDescription,
           builder: (context, condition, child) {
-            final gradientColors = AppTheme.getGradientForCondition(condition);
-
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: gradientColors,
-                ),
-              ),
-              child: SafeArea(
-                child: _buildContent(context),
-              ),
-            );
+            return SafeArea(child: _buildContent(context));
           },
         );
       },
@@ -289,9 +279,16 @@ class WeatherPage extends StatelessWidget {
     );
   }
 
-  /// Builds the loading indicator widget
+  /// Builds the loading indicator widget with accent color
   Widget _buildLoadingIndicator() {
-    return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
+    return Builder(
+      builder: (context) => Center(
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.secondary, // Uses accent color for loading
+          strokeWidth: 3.0,
+        ),
+      ),
+    );
   }
 
   /// Builds the error widget with retry functionality
@@ -300,9 +297,9 @@ class WeatherPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: UIConstants.iconSizeLarge, color: Colors.red),
+          Icon(Icons.error_outline, size: UIConstants.iconSizeLarge, color: Theme.of(context).colorScheme.error),
           const SizedBox(height: UIConstants.spacingXLarge),
-          Text('Error: $errorMessage', textAlign: TextAlign.center, style: AppTheme.headingMedium),
+          Builder(builder: (context) => Text('Error: $errorMessage', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium)),
           const SizedBox(height: UIConstants.spacingXLarge),
           ElevatedButton(
             onPressed: () => context.read<WeatherProvider>().fetchAllWeatherData(),
@@ -323,23 +320,24 @@ class WeatherPage extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () => context.read<WeatherProvider>().fetchAllWeatherData(),
       child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         child: Padding(
-          padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+          padding: const EdgeInsets.all(UIConstants.spacingLarge), // Reduced from spacingXLarge
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildAlertsSection(context),
+              const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
               _buildCurrentConditionsCard(context),
-              const SizedBox(height: UIConstants.spacingXXXLarge),
+              const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
               const _CollapsibleDetailsCard(),
-              const SizedBox(height: UIConstants.spacingXXXLarge),
+              const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
               _buildHourlyForecastSection(context),
-              const SizedBox(height: UIConstants.spacingXXXLarge),
+              const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
               _buildPrecipitationChart(context),
-              const SizedBox(height: UIConstants.spacingXXXLarge),
+              const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
               _buildDailyForecastSection(context),
-              const SizedBox(height: UIConstants.spacingHuge),
+              const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
               _buildRadarSection(context),
             ],
           ),
@@ -350,27 +348,34 @@ class WeatherPage extends StatelessWidget {
 
   /// Builds the NWS alerts section
   Widget _buildAlertsSection(BuildContext context) {
-    return Selector<WeatherProvider, List<NwsAlertFeature>>(
-      selector: (context, provider) => provider.nwsAlerts,
-      builder: (context, alerts, child) {
-        if (alerts.isNotEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: UIConstants.spacingXLarge),
-            child: NwsAlertBanner(alerts: alerts),
-          );
-        }
-        return const SizedBox.shrink();
-      },
+    return RepaintBoundary(
+      child: Selector<WeatherProvider, List<NwsAlertFeature>>(
+        selector: (context, provider) => provider.nwsAlerts,
+        builder: (context, alerts, child) {
+          if (alerts.isNotEmpty) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: UIConstants.spacingLarge), // Reduced from spacingXLarge
+              child: NwsAlertBanner(alerts: alerts),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
+
+  /// Builds the liquid glass test section to compare old vs new implementations
+
+
+
 
   /// Builds the hourly forecast section with title
   Widget _buildHourlyForecastSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Hourly Forecast', style: AppTheme.headingSmall),
-        const SizedBox(height: UIConstants.spacingXLarge),
+        Text('Hourly Forecast', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: UIConstants.spacingStandard), // Reduced from spacingLarge
         const _HourlyForecastListSection(),
       ],
     );
@@ -381,9 +386,9 @@ class WeatherPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Daily Forecast', style: AppTheme.headingSmall),
-        const SizedBox(height: UIConstants.spacingXLarge),
-        _buildForecastSection(context),
+        Text('Daily Forecast', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: UIConstants.spacingStandard), // Reduced from spacingLarge
+        const _DailyForecastListSection(),
       ],
     );
   }
@@ -393,8 +398,8 @@ class WeatherPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Radar', style: AppTheme.headingSmall),
-        const SizedBox(height: UIConstants.spacingXLarge),
+        Text('Radar', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: UIConstants.spacingStandard), // Reduced from spacingLarge
         _buildRadarCard(context),
       ],
     );
@@ -422,12 +427,15 @@ class WeatherPage extends StatelessWidget {
         final high = highLow['high'];
         final low = highLow['low'];
 
-        return GlassCard(
-          useBlur: false,
-          opacity: 0.4,
-          child: Padding(
-            padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+        return RepaintBoundary(
+          child: GlassCard(
+            borderRadius: BorderRadius.circular(UIConstants.borderRadiusStandard),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: UIConstants.spacingXXXLarge, // 24.0px - more left/right padding
+              vertical: UIConstants.spacingLarge,    // 20.0px - keep top/bottom padding
+            ), // Increased from spacingXLarge to properly align with other cards
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -436,46 +444,32 @@ class WeatherPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${conditions.temperature!.round()}°',
-                            style: AppTheme.temperature,
-                          ),
+                          Builder(builder: (context) => Text('${conditions.temperature!.round()}°', style: Theme.of(context).textTheme.displayLarge)),
                           if (conditions.apparentTemperature != null)
-                            Text(
-                              'Feels like ${conditions.apparentTemperature!.round()}°',
-                              style: AppTheme.bodyLarge,
-                            ),
+                            Builder(builder: (context) => Text('Feels like ${conditions.apparentTemperature!.round()}°', style: Theme.of(context).textTheme.bodyLarge)),
                           const SizedBox(height: UIConstants.spacingTiny),
-                          Text(
-                            conditions.textDescription ?? 'No description',
-                            style: AppTheme.headingSmall.copyWith(fontSize: 20),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: UIConstants.spacingTiny),
+                          Builder(builder: (context) => Text(conditions.textDescription ?? 'No description', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 20), overflow: TextOverflow.ellipsis, maxLines: 2)),
+                          const SizedBox(height: UIConstants.spacingTiny), // Increased from spacingSmall for better balance with larger padding
                           if (high != null && low != null)
-                            Text(
-                              'H: $high°  L: $low°',
-                              style: AppTheme.bodyLarge,
-                            ),
+                            Builder(builder: (context) => Text('H: $high°  L: $low°', style: Theme.of(context).textTheme.bodyLarge)),
                         ],
                       ),
                     ),
-                    Image.asset(
-                      iconPath,
-                      width: kIconSizeLarge,
-                      height: kIconSizeLarge,
-                      fit: BoxFit.contain,
+                    Container(
+                      margin: const EdgeInsets.only(right: UIConstants.spacingStandard),
+                      child: Image.asset(
+                        iconPath,
+                        width: kIconSizeLarge,
+                        height: kIconSizeLarge,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: UIConstants.spacingXLarge),
+                const SizedBox(height: UIConstants.spacingLarge), // Reduced from spacingXLarge
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Updated: ${_dateTimeFormatter.format(conditions.timestamp!.toLocal())}',
-                    style: AppTheme.bodySmall,
-                  ),
+                  child: Builder(builder: (context) => Text('Updated: ${_dateTimeFormatter.format(conditions.timestamp!.toLocal())}', style: Theme.of(context).textTheme.bodySmall)),
                 ),
               ],
             ),
@@ -507,22 +501,13 @@ class WeatherPage extends StatelessWidget {
         );
         if (!hasRain) {
           return GlassCard(
-            useBlur: false,
-            opacity: 0.2,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: UIConstants.spacingXLarge, horizontal: UIConstants.spacingXXLarge),
-              child: Row(
-                children: [
-                  const Icon(Icons.water_drop_outlined, color: Colors.white, size: 22),
-                  const SizedBox(width: UIConstants.spacingXLarge),
-                  Expanded(
-                    child: Text(
-                      'No precipitation expected in the next 24 hours',
-                      style: AppTheme.bodyLarge.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
+            priority: GlassCardPriority.standard,
+            child: Row(
+              children: [
+                const Icon(Icons.water_drop_outlined, color: Colors.white, size: 22),
+                const SizedBox(width: UIConstants.spacingLarge), // Reduced from spacingXLarge
+                Expanded(child: Builder(builder: (context) => Text('No precipitation expected in the next 24 hours', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white)))),
+              ],
             ),
           );
         }
@@ -532,7 +517,6 @@ class WeatherPage extends StatelessWidget {
           builder: (context, weatherData, child) {
             return PrecipitationChart(
               hourlyForecast: hourlyForecast,
-              useBlur: false,
             );
           },
         );
@@ -540,86 +524,28 @@ class WeatherPage extends StatelessWidget {
     );
   }
 
-  Widget _buildForecastSection(BuildContext context) {
-    return Selector<WeatherProvider, List<ForecastPeriod>>(
-      selector: (context, provider) => provider.weatherData!.forecast,
-      builder: (context, forecast, child) {
-        if (forecast.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final Map<String, List<ForecastPeriod>> forecastByDay = <String, List<ForecastPeriod>>{};
-        for (final ForecastPeriod period in forecast) {
-          final String dateKey = DateFormat('yyyy-MM-dd').format(period.startTime);
-          forecastByDay.putIfAbsent(dateKey, () => <ForecastPeriod>[]).add(period);
-        }
-
-        final List<String> sortedKeys = forecastByDay.keys.toList()
-          ..sort((a, b) => DateTime.parse(a).compareTo(DateTime.parse(b)));
-
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: sortedKeys.length,
-              separatorBuilder: (context, index) => const SizedBox(height: UIConstants.spacingLarge),
-              itemBuilder: (context, index) {
-                final String dateKey = sortedKeys[index];
-                final List<ForecastPeriod> periods = forecastByDay[dateKey]!;
-                final DateTime date = DateTime.parse(dateKey);
-
-                ForecastPeriod? dayPeriod;
-                ForecastPeriod? nightPeriod;
-                try {
-                  dayPeriod = periods.firstWhere((p) => p.isDaytime);
-                } catch (_) {
-                  dayPeriod = null;
-                }
-                try {
-                  nightPeriod = periods.firstWhere((p) => !p.isDaytime);
-                } catch (_) {
-                  nightPeriod = null;
-                }
-
-                return DailyForecastListItem(
-                  date: date,
-                  dayPeriod: dayPeriod,
-                  nightPeriod: nightPeriod,
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // Legacy _buildForecastSection removed in favor of _DailyForecastListSection
 
   Widget _buildRadarCard(BuildContext context) {
     return Selector<WeatherProvider, SDCity>(
       selector: (context, provider) => provider.selectedCity,
       builder: (context, city, child) {
         return GlassCard(
-          useBlur: false,
-          opacity: 0.2,
-          child: Padding(
-            padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-            child: RadarCard(
-              city: city,
-              onTap: () {
-                final condition = context.read<WeatherProvider>().weatherData?.currentConditions?.textDescription;
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => RadarPage(
-                      weatherCondition: condition,
-                      citySelector: citySelector,
-                      currentScreenId: 'radar',
-                    ),
+          priority: GlassCardPriority.standard,
+          child: RadarCard(
+            city: city,
+            onTap: () {
+              final condition = context.read<WeatherProvider>().weatherData?.currentConditions?.textDescription;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => RadarPage(
+                    weatherCondition: condition,
+                    citySelector: citySelector,
+                    currentScreenId: 'radar',
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         );
       },
@@ -639,31 +565,7 @@ class _HourlyForecastListSectionState extends State<_HourlyForecastListSection> 
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildHourlyForecastList(context),
-        const SizedBox(height: UIConstants.spacingLarge),
-        Center(
-          child: GestureDetector(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: GlassCard(
-              useBlur: false,
-              opacity: UIConstants.opacityLow,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: UIConstants.spacingStandard,
-                  horizontal: UIConstants.spacingXLarge,
-                ),
-                child: Text(
-                  _isExpanded ? 'Show less' : 'Show all 24 hours',
-                  style: AppTheme.bodyMedium,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    return _buildHourlyForecastList(context);
   }
 
   Widget _buildHourlyForecastList(BuildContext context) {
@@ -686,38 +588,206 @@ class _HourlyForecastListSectionState extends State<_HourlyForecastListSection> 
         return Selector<WeatherProvider, WeatherData>(
           selector: (context, provider) => provider.weatherData!,
           builder: (context, weatherData, child) {
-            final Widget list = ListView.separated(
-              shrinkWrap: !_isExpanded,
-              physics: _isExpanded
-                  ? const ClampingScrollPhysics()
-                  : const NeverScrollableScrollPhysics(),
-              primary: false,
-              itemCount: visible.length,
-              separatorBuilder: (context, index) => const SizedBox(height: UIConstants.spacingLarge),
-              itemBuilder: (context, index) {
-                final HourlyForecast f = visible[index];
-                return HourlyForecastListItem(
-                  forecast: f,
-                  sunrise: weatherData.sunrise,
-                  sunset: weatherData.sunset,
-                  tomorrowSunrise: weatherData.tomorrowSunrise,
-                  tomorrowSunset: weatherData.tomorrowSunset,
-                );
-              },
-            );
+            Widget listContent;
+            
+            if (_isExpanded) {
+              // Use ListView when expanded
+              listContent = ListView.separated(
+                physics: const ClampingScrollPhysics(),
+                primary: false,
+                itemCount: visible.length,
+                separatorBuilder: (context, index) => Container(
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.2),
+                  margin: const EdgeInsets.symmetric(horizontal: UIConstants.spacingLarge), // Reduced from spacingXLarge
+                ),
+                itemBuilder: (context, index) {
+                  final HourlyForecast f = visible[index];
+                  return HourlyForecastListItem(
+                    forecast: f,
+                    sunrise: weatherData.sunrise,
+                    sunset: weatherData.sunset,
+                    tomorrowSunrise: weatherData.tomorrowSunrise,
+                    tomorrowSunset: weatherData.tomorrowSunset,
+                  );
+                },
+              );
+            } else {
+              // Use Column when collapsed for proper sizing
+              listContent = Column(
+                children: [
+                  for (int i = 0; i < visible.length; i++) ...[
+                    if (i > 0)
+                      Container(
+                        height: 1,
+                        color: Colors.white.withValues(alpha: 0.2),
+                        margin: const EdgeInsets.symmetric(horizontal: UIConstants.spacingLarge), // Reduced from spacingXLarge
+                      ),
+                    HourlyForecastListItem(
+                      forecast: visible[i],
+                      sunrise: weatherData.sunrise,
+                      sunset: weatherData.sunset,
+                      tomorrowSunrise: weatherData.tomorrowSunrise,
+                      tomorrowSunset: weatherData.tomorrowSunset,
+                    ),
+                  ],
+                  // Add caret indicator at the bottom
+                  if (next24.length > 6)
+                    Padding(
+                      padding: const EdgeInsets.only(top: UIConstants.spacingSmall), // Reduced from spacingStandard
+                      child: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        size: 24,
+                      ),
+                    ),
+                ],
+              );
+            }
 
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
-                child: _isExpanded
-                    ? SizedBox(
-                        height: 360,
-                        child: list,
-                      )
-                    : list,
+                child: GestureDetector(
+                  onTap: () => setState(() => _isExpanded = !_isExpanded),
+                  child: GlassCard(
+                    priority: GlassCardPriority.standard,
+                    child: _isExpanded
+                        ? SizedBox(
+                            height: 360,
+                            child: listContent,
+                          )
+                        : listContent,
+                  ),
+                ),
               ),
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _DailyForecastListSection extends StatefulWidget {
+  const _DailyForecastListSection();
+
+  @override
+  State<_DailyForecastListSection> createState() => _DailyForecastListSectionState();
+}
+
+class _DailyForecastListSectionState extends State<_DailyForecastListSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildDailyForecastList(context);
+  }
+
+  Widget _buildDailyForecastList(BuildContext context) {
+    return Selector<WeatherProvider, List<ForecastPeriod>>(
+      selector: (context, provider) => provider.weatherData!.forecast,
+      builder: (context, forecast, child) {
+        if (forecast.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final Map<String, List<ForecastPeriod>> forecastByDay = <String, List<ForecastPeriod>>{};
+        for (final ForecastPeriod period in forecast) {
+          final String dateKey = DateFormat('yyyy-MM-dd').format(period.startTime);
+          forecastByDay.putIfAbsent(dateKey, () => <ForecastPeriod>[]).add(period);
+        }
+
+        final List<String> sortedKeys = forecastByDay.keys.toList()
+          ..sort((a, b) => DateTime.parse(a).compareTo(DateTime.parse(b)));
+
+        final List<String> visible = _isExpanded ? sortedKeys : sortedKeys.take(4).toList();
+
+        Widget listContent;
+        
+        if (_isExpanded) {
+          // Use ListView when expanded
+          listContent = ListView.separated(
+            physics: const ClampingScrollPhysics(),
+            primary: false,
+            itemCount: visible.length,
+            separatorBuilder: (context, index) => Container(
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.2),
+              margin: const EdgeInsets.symmetric(horizontal: UIConstants.spacingLarge), // Reduced from spacingXLarge
+            ),
+            itemBuilder: (context, index) {
+              final String dateKey = visible[index];
+              final List<ForecastPeriod> periods = forecastByDay[dateKey]!;
+              final DateTime date = DateTime.parse(dateKey);
+
+              ForecastPeriod? dayPeriod;
+              ForecastPeriod? nightPeriod;
+              try {
+                dayPeriod = periods.firstWhere((p) => p.isDaytime);
+              } catch (_) {
+                dayPeriod = null;
+              }
+              try {
+                nightPeriod = periods.firstWhere((p) => !p.isDaytime);
+              } catch (_) {
+                nightPeriod = null;
+              }
+
+              return DailyForecastListItem(
+                date: date,
+                dayPeriod: dayPeriod,
+                nightPeriod: nightPeriod,
+              );
+            },
+          );
+        } else {
+          // Use Column when collapsed for proper sizing
+          listContent = Column(
+            children: [
+              for (int i = 0; i < visible.length; i++) ...[
+                if (i > 0)
+                  Container(
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    margin: const EdgeInsets.symmetric(horizontal: UIConstants.spacingLarge), // Reduced from spacingXLarge
+                  ),
+                DailyForecastListItem(
+                  date: DateTime.parse(visible[i]),
+                  dayPeriod: forecastByDay[visible[i]]!.firstWhere((p) => p.isDaytime, orElse: () => forecastByDay[visible[i]]!.first),
+                  nightPeriod: forecastByDay[visible[i]]!.firstWhere((p) => !p.isDaytime, orElse: () => forecastByDay[visible[i]]!.first),
+                ),
+              ],
+              // Add caret indicator at the bottom
+              if (sortedKeys.length > 4)
+                Padding(
+                  padding: const EdgeInsets.only(top: UIConstants.spacingSmall), // Reduced from spacingStandard
+                  child: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    size: 24,
+                  ),
+                ),
+            ],
+          );
+        }
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: GestureDetector(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              child: GlassCard(
+                priority: GlassCardPriority.standard,
+                child: _isExpanded
+                    ? SizedBox(
+                        height: 400,
+                        child: listContent,
+                    )
+                    : listContent,
+              ),
+            ),
+          ),
         );
       },
     );

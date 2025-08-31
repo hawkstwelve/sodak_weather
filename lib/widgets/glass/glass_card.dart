@@ -3,109 +3,102 @@ import 'dart:ui';
 import '../../theme/app_theme.dart';
 import '../../constants/ui_constants.dart';
 
-/// GlassCard creates a frosted glass effect
-/// Heavily optimized for performance while maintaining the glass-like appearance
+/// Visual hierarchy levels for glass cards
+enum GlassCardPriority { standard, prominent, alert }
+
+/// GlassCard creates a frosted glass effect with modern design principles
+/// Optimized for performance while maintaining visual hierarchy
 class GlassCard extends StatelessWidget {
   final Widget child;
-  final bool useBlur;
   final BorderRadius? borderRadius;
   final EdgeInsets contentPadding;
-  final double? opacity; // Optional opacity override for custom transparency
-
-  // Static fields for optimization to avoid object creation on every build
-  static final ImageFilter _lightBlur = ImageFilter.blur(sigmaX: 8, sigmaY: 8);
+  final GlassCardPriority priority; // Visual hierarchy level
+  final bool enablePressEffect; // Subtle press animation
+  final bool useBlur; // Enable backdrop blur effect
 
   const GlassCard({
     required this.child,
-    this.useBlur = false, // Default to false for better performance
     this.borderRadius,
-    this.contentPadding = EdgeInsets.zero,
-    this.opacity, // Allow custom opacity for specific cards
+    this.contentPadding = const EdgeInsets.all(UIConstants.spacingLarge), // Reduced from spacingXLarge
+    this.priority = GlassCardPriority.standard,
+    this.enablePressEffect = false,
+    this.useBlur = false,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final BorderRadius borderR = borderRadius ?? BorderRadius.circular(UIConstants.spacingXXXLarge);
-
-    // For performance critical areas, use the simulated glass effect (no blur)
-    if (!useBlur) {
-      return _buildSimulatedGlassCard(borderR);
-    }
-
-    // Only use actual blur effect for static/important UI elements
-    return RepaintBoundary(
-      child: ClipRRect(
-        borderRadius: borderR,
-        child: BackdropFilter(
-          filter:
-              _lightBlur, // Use static filter instance to avoid object creation
-          child: _buildOptimizedContainer(borderR, true),
-        ),
-      ),
-    );
-  }
-
-  // Simulated glass effect that doesn't use BackdropFilter
-  Widget _buildSimulatedGlassCard(BorderRadius borderR) {
-    // Use custom opacity if provided, otherwise use default AppTheme.glassCardColor
-    final Color baseColor = opacity != null 
-        ? Colors.white.withValues(alpha: opacity!.clamp(0.0, 1.0))
-        : AppTheme.glassCardColor;
+    final BorderRadius borderR = borderRadius ?? BorderRadius.circular(UIConstants.borderRadiusStandard);
     
-    // Calculate gradient colors based on opacity
-    final Color gradientColor1 = opacity != null 
-        ? Colors.white.withValues(alpha: (opacity! * 1.5).clamp(0.0, 1.0)) // Slightly more opaque for top
-        : const Color(0x4DFFFFFF); // Default 30% opacity
-    final Color gradientColor2 = opacity != null 
-        ? Colors.white.withValues(alpha: (opacity! * 1.2).clamp(0.0, 1.0)) // Slightly more opaque for bottom
-        : const Color(0x33FFFFFF); // Default 20% opacity
-
+    Widget cardWidget;
+    if (useBlur) {
+      cardWidget = _buildBlurredGlassCard(context, borderR);
+    } else {
+      cardWidget = _buildFakeGlassCard(context, borderR);
+    }
+    
+    // Add press effect if enabled
+    if (enablePressEffect) {
+      cardWidget = _buildPressEffectWrapper(cardWidget);
+    }
+    
+    return cardWidget;
+  }
+  
+  Widget _buildFakeGlassCard(BuildContext context, BorderRadius borderR) {
+    // Get the glass theme extension for proper colors
+    final glassTheme = Theme.of(context).extension<GlassThemeExtension>();
+    
     return Container(
-      padding: contentPadding,
       decoration: BoxDecoration(
-        color: baseColor,
         borderRadius: borderR,
-        // Simulated glass effect with gradient
-        gradient: LinearGradient(
-          colors: [gradientColor1, gradientColor2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: glassTheme?.backgroundColor ?? AppTheme.glassCardColor, // Use theme extension if available
+        border: Border.all(
+          color: glassTheme?.borderColor ?? const Color(0x4DFFFFFF), // Use theme extension if available
+          width: 1.0,
         ),
-        // Minimal shadow for depth
-        boxShadow: const [
-          BoxShadow(
-            color: AppTheme.glassShadowColor,
-            blurRadius: UIConstants.spacingLarge, // Reduced for better performance
-            offset: Offset(0, UIConstants.spacingSmall), // Smaller offset
-          ),
-        ],
+        // Remove blur shadows to eliminate edge blur effect
       ),
+      padding: contentPadding,
       child: child,
     );
   }
 
-  // Original container used with blur effect for important UI elements
-  Widget _buildOptimizedContainer(BorderRadius borderR, bool hasBlur) {
-    return Container(
-      padding: contentPadding,
-      decoration: BoxDecoration(
-        color: AppTheme.glassCardColor,
-        borderRadius: borderR,
-        // Using a single BoxShadow is more efficient
-        boxShadow: hasBlur
-            ? const [
-                BoxShadow(
-                  color: AppTheme.glassShadowColor,
-                  blurRadius: UIConstants.spacingXLarge,
-                  offset: Offset(0, UIConstants.spacingLarge),
-                ),
-              ]
-            : null, // No shadow when not using blur for maximum performance
+  Widget _buildBlurredGlassCard(BuildContext context, BorderRadius borderR) {
+    // Get the glass theme extension for proper colors
+    final glassTheme = Theme.of(context).extension<GlassThemeExtension>();
+    
+    // Real backdrop blur effect for modal dialogs
+    return ClipRRect(
+      borderRadius: borderR,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: borderR,
+            color: glassTheme?.backgroundColor ?? AppTheme.glassCardColor, // Use theme extension if available
+            border: Border.all(
+              color: glassTheme?.borderColor ?? const Color(0x4DFFFFFF), // Use theme extension if available
+              width: 1.0,
+            ),
+          ),
+          padding: contentPadding,
+          child: child,
+        ),
       ),
+    );
+  }
+  
+  Widget _buildPressEffectWrapper(Widget child) {
+    return AnimatedScale(
+      scale: 1.0,
+      duration: UIConstants.animationFast,
       child: child,
     );
   }
+
+  
+
 }
 
 /// Shows a glassmorphic snackbar at the bottom of the screen using OverlayEntry.
@@ -120,12 +113,12 @@ void showGlassCardSnackbar(BuildContext context, String message) {
       child: Material(
         color: Colors.transparent,
         child: GlassCard(
-          useBlur: true,
+          priority: GlassCardPriority.standard,
           contentPadding: const EdgeInsets.symmetric(horizontal: UIConstants.spacingXXXLarge, vertical: UIConstants.spacingXLarge),
           child: Center(
             child: Text(
               message,
-              style: AppTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
           ),

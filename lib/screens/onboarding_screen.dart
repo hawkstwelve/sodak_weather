@@ -4,9 +4,11 @@ import 'package:introduction_screen/introduction_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../providers/onboarding_provider.dart';
 import '../services/notification_service.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import 'package:geolocator/geolocator.dart';
 import '../providers/location_provider.dart';
+import '../providers/theme_provider.dart';
+import '../widgets/background/frosted_blob_background.dart';
 
 /// Onboarding screen using introduction_screen package with glassmorphism styling
 class OnboardingScreen extends StatefulWidget {
@@ -26,11 +28,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    return FrostedBlobBackground(
+      themeConfig: themeProvider.config,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: IntroductionScreen(
         key: _introKey,
-        globalBackgroundColor: const Color(0xFFF8F9FA),
+        globalBackgroundColor: Colors.transparent,
         pages: _buildPages(),
         showSkipButton: true,
         showNextButton: true,
@@ -53,18 +59,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
         baseBtnStyle: TextButton.styleFrom(
-          foregroundColor: AppTheme.textDark,
+          foregroundColor: Colors.black87,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-          minimumSize: const Size(140.0, 48.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+          minimumSize: const Size(80.0, 44.0),
         ),
         controlsMargin: const EdgeInsets.all(24.0),
         controlsPadding: const EdgeInsets.all(16.0),
         animationDuration: 400,
         curve: Curves.easeInOut,
       ),
+    ),
     );
   }
 
@@ -95,17 +102,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
       ),
-      decoration: const PageDecoration(
-        titleTextStyle: TextStyle(
-          fontSize: 28.0,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textDark,
-        ),
-        bodyTextStyle: TextStyle(
-          fontSize: 16.0,
-          color: AppTheme.textDark,
-        ),
-        pageColor: Color(0xFFF8F9FA),
+      decoration: PageDecoration(
+        titleTextStyle: Theme.of(context).textTheme.headlineMedium ?? const TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold),
+        bodyTextStyle: Theme.of(context).textTheme.bodyMedium ?? const TextStyle(fontSize: 16.0),
+        pageColor: Colors.transparent,
         imageFlex: 2,
         bodyFlex: 1,
       ),
@@ -131,14 +131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       bodyWidget: Column(
         children: [
-          const Text(
-            'To provide you with accurate weather forecasts and alerts, we need access to your location. This helps us show you weather data for your exact area.',
-            style: TextStyle(
-              fontSize: 16.0,
-              color: AppTheme.textDark,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          Builder(builder: (context) => Text('To provide you with accurate weather forecasts and alerts, we need access to your location. This helps us show you weather data for your exact area.', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center)),
           const SizedBox(height: 16.0),
           Center(
             child: _locationGranted == true
@@ -177,17 +170,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ],
       ),
-      decoration: const PageDecoration(
-        titleTextStyle: TextStyle(
-          fontSize: 28.0,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textDark,
-        ),
-        bodyTextStyle: TextStyle(
-          fontSize: 16.0,
-          color: AppTheme.textDark,
-        ),
-        pageColor: Color(0xFFF8F9FA),
+      decoration: PageDecoration(
+        titleTextStyle: Theme.of(context).textTheme.headlineMedium ?? const TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold),
+        bodyTextStyle: Theme.of(context).textTheme.bodyMedium ?? const TextStyle(fontSize: 16.0),
+        pageColor: Colors.transparent,
         imageFlex: 2,
         bodyFlex: 1,
       ),
@@ -213,14 +199,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       bodyWidget: Column(
         children: [
-          const Text(
-            'Stay informed about severe weather conditions, alerts, and important weather updates with timely notifications.',
-            style: TextStyle(
-              fontSize: 16.0,
-              color: AppTheme.textDark,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          Builder(builder: (context) => Text('Stay informed about severe weather conditions, alerts, and important weather updates with timely notifications.', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center)),
           const SizedBox(height: 16.0),
           Center(
             child: _notificationGranted == true
@@ -261,17 +240,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ],
       ),
-      decoration: const PageDecoration(
-        titleTextStyle: TextStyle(
-          fontSize: 28.0,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textDark,
-        ),
-        bodyTextStyle: TextStyle(
-          fontSize: 16.0,
-          color: AppTheme.textDark,
-        ),
-        pageColor: Color(0xFFF8F9FA),
+      decoration: PageDecoration(
+        titleTextStyle: Theme.of(context).textTheme.headlineMedium ?? const TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold),
+        bodyTextStyle: Theme.of(context).textTheme.bodyMedium ?? const TextStyle(fontSize: 16.0),
+        pageColor: Colors.transparent,
         imageFlex: 2,
         bodyFlex: 1,
       ),
@@ -296,17 +268,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
       ),
-      decoration: const PageDecoration(
-        titleTextStyle: TextStyle(
-          fontSize: 28.0,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textDark,
-        ),
-        bodyTextStyle: TextStyle(
-          fontSize: 16.0,
-          color: AppTheme.textDark,
-        ),
-        pageColor: Color(0xFFF8F9FA),
+      decoration: PageDecoration(
+        titleTextStyle: Theme.of(context).textTheme.headlineMedium ?? const TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold),
+        bodyTextStyle: Theme.of(context).textTheme.bodyMedium ?? const TextStyle(fontSize: 16.0),
+        pageColor: Colors.transparent,
         imageFlex: 2,
         bodyFlex: 1,
       ),
@@ -314,10 +279,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildGlassButton(String text) {
-    return SizedBox(
-      width: 100.0,
+    return IntrinsicWidth(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12.0),
@@ -332,14 +296,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Center(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 16.0,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppTheme.textDark,
+              color: Colors.black87,
             ),
             textAlign: TextAlign.center,
-            overflow: TextOverflow.visible,
-            softWrap: false,
+            maxLines: 1,
           ),
         ),
       ),
@@ -347,31 +309,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildDoneButton() {
-    return Container(
-      width: 120.0,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Color.alphaBlend(Colors.black.withAlpha((0.1 * 255).toInt()), Colors.transparent),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return IntrinsicWidth(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.0),
+          boxShadow: [
+            BoxShadow(
+              color: Color.alphaBlend(Colors.black.withAlpha((0.1 * 255).toInt()), Colors.transparent),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            'Done',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
           ),
-        ],
-      ),
-      child: const Center(
-        child: Text(
-          'Done',
-          style: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textDark,
-          ),
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.visible,
-          softWrap: false,
         ),
       ),
     );

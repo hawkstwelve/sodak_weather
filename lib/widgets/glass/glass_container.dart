@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../theme/app_theme.dart';
 
 /// A glass container widget with a frosted appearance
@@ -14,8 +13,7 @@ class GlassContainer extends StatelessWidget {
   final List<Color>? gradientColors;
   final BoxBorder? border;
 
-  // Static fields for optimization to avoid object creation on every build
-  static final ImageFilter _lightBlur = ImageFilter.blur(sigmaX: 8, sigmaY: 8);
+  // Note: Blur sigma should come from theme extension for proper theme adaptation
 
   const GlassContainer({
     required this.child,
@@ -34,57 +32,37 @@ class GlassContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final BorderRadius borderR = borderRadius ?? BorderRadius.circular(24);
 
-    // For performance critical areas, use the simulated glass effect
-    if (!useBlur) {
-      return _buildSimulatedGlassContainer(borderR, context);
-    }
-
-    // Only use actual blur effect for static/important UI elements
-    return RepaintBoundary(
-      child: ClipRRect(
-        borderRadius: borderR,
-        child: BackdropFilter(
-          filter: _lightBlur,
-          child: _buildSimulatedGlassContainer(borderR, context),
-        ),
-      ),
-    );
+    // Use fake glass effect for reliable performance
+    return _buildFakeGlassContainer(borderR);
   }
 
-  Widget _buildSimulatedGlassContainer(
-    BorderRadius borderR,
-    BuildContext context,
-  ) {
-    final Color bgColor = backgroundColor ?? AppTheme.glassCardColor;
-    final List<Color> gradient =
-        gradientColors ??
-        [
-          const Color(0xE6FFFFFF), // White with 90% opacity
-          const Color(0xCCFFFFFF), // White with 80% opacity
-        ];
-
+  Widget _buildFakeGlassContainer(BorderRadius borderR) {
     return Container(
       width: width,
       height: height,
       padding: padding,
       decoration: BoxDecoration(
-        color: bgColor,
         borderRadius: borderR,
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        // Fake glass effect using static colors
+        color: backgroundColor ?? AppTheme.glassCardColor,
+        // White border for glass edge effect
+        border: border ?? Border.all(
+          color: const Color(0x4DFFFFFF), // White with 30% opacity
+          width: 1.0,
         ),
-        border: border,
-        boxShadow: const [
-          BoxShadow(
-            color: AppTheme.glassShadowColor,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+        // Remove blur shadows to eliminate edge blur effect
       ),
-      child: child,
+      child: gradientColors != null ? Container(
+        decoration: BoxDecoration(
+          borderRadius: borderR,
+          gradient: LinearGradient(
+            colors: gradientColors!,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: child,
+      ) : child,
     );
   }
 }

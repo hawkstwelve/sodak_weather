@@ -72,6 +72,8 @@ class WeatherChatProvider with ChangeNotifier {
         location: location,
       );
 
+      // Log the AI response for debugging
+      
       // Add AI response to messages
       _messages.add(aiResponse);
       _updateCurrentSession();

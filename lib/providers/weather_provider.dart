@@ -39,6 +39,7 @@ class WeatherProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isUsingLocation => _isUsingLocation;
+  bool get isInitialized => _locationProvider != null;
 
   // Expose the weather service to access lastRawForecastData if needed
   WeatherService get weatherService => _weatherService;
@@ -56,6 +57,8 @@ class WeatherProvider with ChangeNotifier {
   };
 
   WeatherProvider() {
+    // Ensure selectedCity is always initialized with a default value
+    _selectedCity = SDCities.siouxFalls;
     // Don't fetch initial weather data here - wait for location provider to be set
     // fetchAllWeatherData();
   }
@@ -63,32 +66,60 @@ class WeatherProvider with ChangeNotifier {
   /// Set the location provider reference
   Future<void> setLocationProvider(LocationProvider locationProvider) async {
     _locationProvider = locationProvider;
-    // Wait for location provider to finish initializing
-    await _locationProvider!.initializationDone;
-    // After setting the location provider, check if we should use cached location
-    await _initializeWithCachedLocation();
+    
+    try {
+      // Wait for location provider to finish initializing
+      await _locationProvider!.initializationDone;
+      // After setting the location provider, check if we should use cached location
+      await _initializeWithCachedLocation();
+      
+      // Notify listeners that initialization is complete
+      notifyListeners();
+    } catch (e) {
+      // If initialization fails, fall back to default city
+      _isUsingLocation = false;
+      _selectedCity = SDCities.siouxFalls;
+      notifyListeners();
+    }
   }
 
   /// Initialize with cached location if available, otherwise use default city
   Future<void> _initializeWithCachedLocation() async {
-    if (_locationProvider == null) return;
-
-    // Always prefer device location if permission is granted and location is available
-    final permission = _locationProvider!.permissionStatus;
-    final hasLocation = _locationProvider!.hasLocation;
-    final isPermissionGranted =
-        permission == LocationPermission.always || permission == LocationPermission.whileInUse;
-
-    if (isPermissionGranted && hasLocation) {
-      _isUsingLocation = true;
-      await fetchAllWeatherDataForCoordinates(
-        _locationProvider!.currentLocation!.latitude,
-        _locationProvider!.currentLocation!.longitude,
-      );
-    } else {
+    if (_locationProvider == null) {
+      // Fall back to default city if no location provider
       _isUsingLocation = false;
       _selectedCity = SDCities.siouxFalls;
-      fetchAllWeatherData();
+      notifyListeners();
+      return;
+    }
+
+    try {
+      // Refresh permission status to ensure we have the latest state
+      await _locationProvider!.refreshPermissionStatus();
+      
+      // Always prefer device location if permission is granted and location is available
+      final permission = _locationProvider!.permissionStatus;
+      final hasLocation = _locationProvider!.hasLocation;
+      final isPermissionGranted =
+          permission == LocationPermission.always || permission == LocationPermission.whileInUse;
+
+      if (isPermissionGranted && hasLocation) {
+        _isUsingLocation = true;
+        notifyListeners(); // Notify immediately when flag changes
+        await fetchAllWeatherDataForCoordinates(
+          _locationProvider!.currentLocation!.latitude,
+          _locationProvider!.currentLocation!.longitude,
+        );
+      } else {
+        _isUsingLocation = false;
+        _selectedCity = SDCities.siouxFalls;
+        fetchAllWeatherData();
+      }
+    } catch (e) {
+      // If anything fails, fall back to default city
+      _isUsingLocation = false;
+      _selectedCity = SDCities.siouxFalls;
+      notifyListeners();
     }
   }
 
@@ -97,10 +128,27 @@ class WeatherProvider with ChangeNotifier {
     if (_selectedCity.name != city.name || _isUsingLocation) {
       _selectedCity = city;
       _isUsingLocation = false;
+      notifyListeners(); // Notify immediately when flag changes
       fetchAllWeatherData();
       
       // Sync location change with backend for notifications
       _syncLocationChange();
+    }
+  }
+
+  /// Set the app to use current location without fetching location again
+  /// This is useful when location has already been obtained elsewhere
+  void setUsingLocation(bool useLocation) {
+    if (_isUsingLocation != useLocation) {
+      _isUsingLocation = useLocation;
+      notifyListeners();
+    }
+  }
+
+  /// Refresh the location provider's permission status
+  Future<void> refreshLocationPermissions() async {
+    if (_locationProvider != null) {
+      await _locationProvider!.refreshPermissionStatus();
     }
   }
 
@@ -115,6 +163,7 @@ class WeatherProvider with ChangeNotifier {
     final success = await _locationProvider!.getCurrentLocation();
     if (success && _locationProvider!.currentLocation != null) {
       _isUsingLocation = true;
+      notifyListeners(); // Notify immediately when flag changes
       
       // Check if we're using cached location
       final isUsingCached = _locationProvider!.isUsingCachedLocation;
@@ -152,6 +201,7 @@ class WeatherProvider with ChangeNotifier {
     final success = await _locationProvider!.refreshLocation();
     if (success && _locationProvider!.currentLocation != null) {
       _isUsingLocation = true;
+      notifyListeners(); // Notify immediately when flag changes
       await fetchAllWeatherDataForCoordinates(
         _locationProvider!.currentLocation!.latitude,
         _locationProvider!.currentLocation!.longitude,
@@ -266,6 +316,7 @@ class WeatherProvider with ChangeNotifier {
   /// Notifies listeners at the start and end of the fetch operation
   /// to update the UI with loading, success, or error states.
   Future<void> fetchAllWeatherData() async {
+    // Ensure we have a valid selected city
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

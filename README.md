@@ -16,7 +16,9 @@ A beautiful, performance-optimized weather application for South Dakota built wi
 - **SPC Outlooks**: Storm Prediction Center severe weather outlooks
 - **Area Forecast Discussion**: Detailed meteorological analysis from NWS meteorologists
 - **Multiple Locations**: Support for major South Dakota cities
-- **Beautiful UI**: Modern, glassmorphic interface with dynamic backgrounds based on weather conditions
+- **Beautiful UI**: Modern, minimalist glassmorphic interface with system-aware light/dark themes
+- **User Theming**: Choose primary and accent colors; optional Material You dynamic color on Android 12+
+- **Auto Theme**: Auto (sunrise/sunset) mode that switches between light/dark based on your location
 - **Performance Optimized**: Designed for smooth performance on all devices
 - **Weather Forecasts**: Get accurate weather forecasts for South Dakota locations
 - **Historical Data**: Access to historical weather information
@@ -139,11 +141,11 @@ lib/
 │   ├── spc_outlook_service.dart # SPC outlooks service
 │   └── weather_service.dart     # Weather API integration
 ├── theme/                 # App styling
-│   └── app_theme.dart           # Global theme configuration
+│   └── app_theme.dart           # Theme engine (ColorScheme builders + GlassThemeExtension)
 ├── utils/                 # Helper utilities
 │   ├── hour_utils.dart                   # Hour calculations
 │   ├── sun_utils.dart                    # Sunrise/sunset calculations
-│   └── weather_utils.dart                # Weather-related helper functions
+│   └── weather_utils.dart                # Weather-related helper functions (icons, formatting)
 └── widgets/               # Reusable UI components
     ├── app_drawer.dart           # Navigation drawer
     ├── forecast_card.dart        # Daily forecast card
@@ -191,7 +193,7 @@ The app follows clean architecture principles with:
 - **Providers**: State management using Provider pattern
 - **Screens**: Full-page UI components
 - **Widgets**: Reusable UI components
-- **Theme**: Consistent styling and glassmorphism effects
+- **Theme**: Centralized `ThemeData` using `ColorScheme` and `GlassThemeExtension`; contrast enforced for accessibility
 
 ## Dependencies
 
@@ -202,6 +204,8 @@ Key dependencies include:
 - `firebase_messaging`: Push notifications
 - `introduction_screen`: Onboarding flow
 - `shared_preferences`: Local data persistence
+- `dynamic_color`: Material You dynamic color (Android 12+)
+- `flutter_colorpicker`: Color picker for primary/accent selection
 
 ## Contributing
 

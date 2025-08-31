@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../constants/ui_constants.dart';
 import '../../models/hourly_forecast.dart';
-import '../../theme/app_theme.dart';
+// import '../../theme/app_theme.dart';
 import '../../utils/hour_utils.dart';
 import '../../utils/weather_utils.dart';
 import '../glass/glass_card.dart';
@@ -50,41 +50,20 @@ void showHourlyForecastDetailDialog({
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: UIConstants.spacingXLarge),
-                Text(
-                  DateFormat('EEEE, MMM d').format(forecast.time.toLocal()),
-                  style: AppTheme.headingMedium,
-                ),
-                Text(
-                  DateFormat('h:mm a').format(forecast.time.toLocal()),
-                  style: AppTheme.bodyLarge.copyWith(
-                    color: AppTheme.textMedium,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(DateFormat('EEEE, MMM d').format(forecast.time.toLocal()), style: Theme.of(context).textTheme.headlineMedium),
+                Text(DateFormat('h:mm a').format(forecast.time.toLocal()), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold)),
                 const SizedBox(height: UIConstants.spacingXLarge),
 
                 _buildTemperatureSection(forecast),
 
                 const SizedBox(height: UIConstants.spacingXLarge),
-                AutoSizeText(
-                  forecast.shortForecast,
-                  style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  minFontSize: 14,
-                ),
+                AutoSizeText(forecast.shortForecast, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, minFontSize: 14),
 
                 const SizedBox(height: UIConstants.spacingXXXLarge),
                 _buildDetailedWeatherInfo(forecast),
 
                 const SizedBox(height: UIConstants.spacingXLarge),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(color: AppTheme.textBlue),
-                  ),
-                ),
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('Close', style: TextStyle(color: Theme.of(context).colorScheme.primary))),
               ],
             ),
           ),
@@ -95,21 +74,21 @@ void showHourlyForecastDetailDialog({
 }
 
 Widget _buildTemperatureSection(HourlyForecast forecast) {
-  return Column(
+  return Builder(builder: (context) => Column(
     children: [
       Text(
         '${forecast.temperature.round()}°F',
-        style: AppTheme.headingLarge.copyWith(fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
       ),
       if (forecast.feelsLikeTemperature != null) ...[
         const SizedBox(height: UIConstants.spacingSmall),
         Text(
           'Feels like ${forecast.feelsLikeTemperature!.round()}°F',
-          style: AppTheme.bodyMedium.copyWith(color: AppTheme.textMedium),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
         ),
       ],
     ],
-  );
+  ));
 }
 
 Widget _buildDetailedWeatherInfo(HourlyForecast forecast) {
@@ -121,7 +100,7 @@ Widget _buildDetailedWeatherInfo(HourlyForecast forecast) {
       forecast.dewPoint == null &&
       forecast.cloudCover == null;
 
-  return Column(
+  return Builder(builder: (context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       if (forecast.precipProbability != null || forecast.precipAmount != null)
@@ -137,39 +116,35 @@ Widget _buildDetailedWeatherInfo(HourlyForecast forecast) {
       if (forecast.cloudCover != null)
         _buildInfoRow(Icons.cloud, 'Cloud Cover', '${forecast.cloudCover}%'),
       if (hasNoDetails)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text(
-            'Detailed weather information not available for this hour.',
-            style: AppTheme.bodyMedium.copyWith(
-              color: AppTheme.textMedium,
-              fontStyle: FontStyle.italic,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
+        Builder(builder: (context) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'Detailed weather information not available for this hour.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      fontStyle: FontStyle.italic,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            )),
     ],
-  );
+  ));
 }
 
 Widget _buildInfoRow(IconData icon, String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: Row(
-      children: [
-        Icon(icon, color: AppTheme.textLight, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.textMedium),
+  return Builder(
+    builder: (context) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
           ),
-        ),
-        Text(
-          value,
-          style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
-        ),
-      ],
+          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+        ],
+      ),
     ),
   );
 }

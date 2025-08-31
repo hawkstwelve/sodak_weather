@@ -11,3 +11,16 @@ High-level changes:
 - Dependencies updated and app version bumped to 4.0.0
 
 
+## v4.1.0
+
+Theme engine modernization and cleanup
+
+- New: Modern theme engine based on `ThemeData`/`ColorScheme` with a `GlassThemeExtension`
+- New: User-customizable theming (primary/accent colors) with local persistence via `SharedPreferences`
+- New: Optional Material You dynamic color (Android 12+) behind an opt-in toggle
+- New: Auto (sunrise/sunset) mode that switches between light/dark based on current location (with fallbacks)
+- Accessibility: Automatic contrast enforcement for on-colors and key components
+- UI: Removed weather-based gradients and visuals; updated screens and widgets to consume theme tokens
+- Cleanup: Removed deprecated weather gradient APIs and legacy color usages
+- Docs: Updated README to reflect the new theme engine and features
+

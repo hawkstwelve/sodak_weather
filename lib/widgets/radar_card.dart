@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/sd_city.dart';
 import '../services/rainviewer_api.dart';
 import '../config/api_config.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../providers/weather_provider.dart';
 import '../utils/hour_utils.dart';
 import '../constants/ui_constants.dart';
@@ -39,6 +39,10 @@ class _RadarCardState extends State<RadarCard> {
 
   Future<void> _fetchRadarFrame() async {
     final data = await RainViewerApi.fetchRadarData();
+    
+    // Check if widget is still mounted before calling setState
+    if (!mounted) return;
+    
     if (data.host != null) {
       final host = data.host!.startsWith('//')
           ? 'https:${data.host}'
@@ -106,10 +110,7 @@ class _RadarCardState extends State<RadarCard> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const SizedBox(
-        height: UIConstants.cardHeightLarge,
-        child: Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor)),
-      );
+      return SizedBox(height: UIConstants.cardHeightLarge, child: Builder(builder: (context) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))));
     }
 
     // If we have a screenshot, display it as a static image
@@ -202,14 +203,7 @@ class _RadarCardState extends State<RadarCard> {
           ),
         ),
         if (_capturingScreenshot)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.3),
-              child: const Center(
-                child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor),
-              ),
-            ),
-          ),
+          Positioned.fill(child: Builder(builder: (context) => Container(color: Colors.black.withValues(alpha: 0.3), child: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))))),
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,

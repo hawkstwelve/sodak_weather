@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../utils/weather_utils.dart';
 import '../utils/hour_utils.dart';
 import '../models/hourly_forecast.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import '../constants/ui_constants.dart';
@@ -14,7 +14,6 @@ class HourlyForecastCard extends StatelessWidget {
   final DateTime? sunset;
   final DateTime? tomorrowSunrise;
   final DateTime? tomorrowSunset;
-  final bool useBlur; // Add parameter for conditional blur effect
 
   const HourlyForecastCard({
     super.key,
@@ -23,8 +22,6 @@ class HourlyForecastCard extends StatelessWidget {
     this.sunset,
     this.tomorrowSunrise,
     this.tomorrowSunset,
-    this.useBlur =
-        false, // Default to false for better performance in scrollable lists
   });
 
   @override
@@ -45,36 +42,23 @@ class HourlyForecastCard extends StatelessWidget {
       child: GestureDetector(
         onTap: () => _showDetailDialog(context),
         child: GlassCard(
-          useBlur: useBlur, // Pass the parameter to GlassCard
-          opacity: UIConstants.opacityVeryLow,
+          priority: GlassCardPriority.standard,
+
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  DateFormat('ha').format(forecast.time.toLocal()),
-                  style: AppTheme.bodySmall.copyWith(fontWeight: FontWeight.bold),
-                ),
+                Text(DateFormat('ha').format(forecast.time.toLocal()), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: UIConstants.spacingSmall),
                 Image.asset(iconAsset, width: UIConstants.iconSizeHourlyForecast, height: UIConstants.iconSizeHourlyForecast),
                 const SizedBox(height: UIConstants.spacingSmall),
-                Text(
-                  '${forecast.temperature.round()}°F',
-                  style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                ),
+                Text('${forecast.temperature.round()}°F', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: UIConstants.spacingSmall),
                 SizedBox(
                   height: UIConstants.spacingHuge,
                   child: Center(
-                    child: AutoSizeText(
-                      forecast.shortForecast,
-                      style: AppTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      minFontSize: 12,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: AutoSizeText(forecast.shortForecast, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center, maxLines: 2, minFontSize: 12, overflow: TextOverflow.ellipsis),
                   ),
                 ),
               ],
@@ -103,7 +87,7 @@ class HourlyForecastCard extends StatelessWidget {
         elevation: 0,
         child: SingleChildScrollView(
           child: GlassCard(
-            useBlur: true, // Use real blur for modal dialogs
+            priority: GlassCardPriority.prominent, // Use prominent priority for modal dialogs
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -118,17 +102,8 @@ class HourlyForecastCard extends StatelessWidget {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: UIConstants.spacingXLarge),
-                  Text(
-                    DateFormat('EEEE, MMM d').format(forecast.time.toLocal()),
-                    style: AppTheme.headingMedium,
-                  ),
-                  Text(
-                    DateFormat('h:mm a').format(forecast.time.toLocal()),
-                    style: AppTheme.bodyLarge.copyWith(
-                      color: AppTheme.textMedium,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(DateFormat('EEEE, MMM d').format(forecast.time.toLocal()), style: Theme.of(context).textTheme.headlineMedium),
+                  Text(DateFormat('h:mm a').format(forecast.time.toLocal()), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold)),
                   const SizedBox(height: UIConstants.spacingXLarge),
 
                   // Main temperature section
@@ -136,11 +111,7 @@ class HourlyForecastCard extends StatelessWidget {
 
                   // Weather description
                   const SizedBox(height: UIConstants.spacingXLarge),
-                  Text(
-                    forecast.shortForecast,
-                    style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(forecast.shortForecast, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
 
                   const SizedBox(height: UIConstants.spacingXXXLarge),
 
@@ -149,13 +120,7 @@ class HourlyForecastCard extends StatelessWidget {
 
                   // Close button
                   const SizedBox(height: UIConstants.spacingXLarge),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(color: AppTheme.textBlue),
-                    ),
-                  ),
+                  TextButton(onPressed: () => Navigator.of(context).pop(), child: Builder(builder: (context) => Text('Close', style: TextStyle(color: Theme.of(context).colorScheme.primary)))),
                 ],
               ),
             ),
@@ -168,16 +133,10 @@ class HourlyForecastCard extends StatelessWidget {
   Widget _buildTemperatureSection() {
     return Column(
       children: [
-        Text(
-          '${forecast.temperature.round()}°F',
-          style: AppTheme.headingLarge.copyWith(fontWeight: FontWeight.bold),
-        ),
+        Builder(builder: (context) => Text('${forecast.temperature.round()}°F', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold))),
         if (forecast.feelsLikeTemperature != null) ...[
           const SizedBox(height: UIConstants.spacingSmall),
-          Text(
-            'Feels like ${forecast.feelsLikeTemperature!.round()}°F',
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.textMedium),
-          ),
+          Builder(builder: (context) => Text('Feels like ${forecast.feelsLikeTemperature!.round()}°F', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
         ],
       ],
     );
@@ -243,43 +202,32 @@ class HourlyForecastCard extends StatelessWidget {
             forecast.relativeHumidity == null &&
             forecast.dewPoint == null &&
             forecast.cloudCover == null)
-          Padding(
+          Builder(builder: (context) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
               'Detailed weather information not available for this hour.',
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.textMedium,
-                fontStyle: FontStyle.italic,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontStyle: FontStyle.italic),
               textAlign: TextAlign.center,
             ),
-          ),
+          )),
       ],
     );
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.textLight, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.textMedium,
-              ),
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             ),
-          ),
-          Text(
-            value,
-            style: AppTheme.bodyMedium.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+            Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }

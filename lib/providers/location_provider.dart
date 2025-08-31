@@ -107,11 +107,19 @@ class LocationProvider with ChangeNotifier {
         return false;
       }
 
-      // Check location permission
+      // Always check permission status fresh to handle cases where user granted permissions
       LocationPermission permission = await LocationService.checkPermission();
+      
+      // Update the stored permission status
+      _permissionStatus = permission;
+      
       if (permission == LocationPermission.denied) {
         _hasRequestedPermission = true;
         permission = await LocationService.requestPermission();
+        
+        // Update permission status again after request
+        _permissionStatus = permission;
+        
         if (permission == LocationPermission.denied) {
           _errorType = LocationErrorType.permissionDenied;
           _errorMessage = 'Location permission denied. Please enable location access in settings.';
@@ -179,6 +187,12 @@ class LocationProvider with ChangeNotifier {
     await LocationCacheService.clearCache();
     _isUsingCachedLocation = false;
     _cacheAgeMinutes = null;
+    notifyListeners();
+  }
+
+  /// Refresh permission status from the system
+  Future<void> refreshPermissionStatus() async {
+    _permissionStatus = await LocationService.checkPermission();
     notifyListeners();
   }
 

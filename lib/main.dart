@@ -5,12 +5,14 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'providers/weather_provider.dart';
 import 'providers/location_provider.dart';
+import 'providers/theme_provider.dart';
 import 'providers/notification_preferences_provider.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/drought_monitor_provider.dart';
 import 'providers/soil_moisture_provider.dart';
 import 'providers/weather_chat_provider.dart';
 import 'widgets/main_app_container.dart';
+
 import 'screens/onboarding_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/notification_service.dart';
@@ -49,12 +51,15 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LocationProvider()),
-        ChangeNotifierProxyProvider<LocationProvider, WeatherProvider>(
-          create: (_) => WeatherProvider(),
-          update: (_, locationProvider, weatherProvider) {
-            weatherProvider?.setLocationProvider(locationProvider);
-            return weatherProvider ?? WeatherProvider();
+        ChangeNotifierProvider<ThemeProvider>(
+          create: (_) {
+            final provider = ThemeProvider();
+            provider.load();
+            return provider;
           },
+        ),
+        ChangeNotifierProvider<WeatherProvider>(
+          create: (_) => WeatherProvider(),
         ),
         ChangeNotifierProvider<NotificationPreferencesProvider>(
           create: (_) {
@@ -106,96 +111,115 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     // Set up provider connections after the widget tree is built
+    // Add a small delay to ensure providers are fully initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setupProviderConnections();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _setupProviderConnections();
+      });
     });
   }
 
-  void _setupProviderConnections() {
-    final notificationService = Provider.of<NotificationService>(context, listen: false);
-    final preferencesProvider = Provider.of<NotificationPreferencesProvider>(context, listen: false);
-    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-    final locationProvider = Provider.of<LocationProvider>(context, listen: false);
-    final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
+  Future<void> _setupProviderConnections() async {
+    try {
+      final notificationService = Provider.of<NotificationService>(context, listen: false);
+      final preferencesProvider = Provider.of<NotificationPreferencesProvider>(context, listen: false);
+      final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+      final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+      final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
 
-    // Initialize onboarding provider
-    onboardingProvider.initialize();
+      // Initialize onboarding provider
+      onboardingProvider.initialize();
 
-    // Set up notification service with providers
-    notificationService.setProviders(
-      preferencesProvider: preferencesProvider,
-      weatherProvider: weatherProvider,
-      locationProvider: locationProvider,
-    );
+      // Set up weather provider with location provider
+      await weatherProvider.setLocationProvider(locationProvider);
 
-    // Initialize notification service
-    notificationService.initialize();
+      // Refresh location permissions to ensure we have the latest state
+      await locationProvider.refreshPermissionStatus();
 
-    // Sync current location with backend for notifications
-    notificationService.syncLocationWithBackend();
+      // Set up notification service with providers
+      notificationService.setProviders(
+        preferencesProvider: preferencesProvider,
+        weatherProvider: weatherProvider,
+        locationProvider: locationProvider,
+      );
 
-    // Listen for location changes
-    weatherProvider.addListener(() {
-      notificationService.onLocationChanged();
-    });
+      // Initialize notification service
+      notificationService.initialize();
 
-    locationProvider.addListener(() {
-      // Sync location with backend when location provider changes
-      notificationService.onLocationChanged();
-    });
+      // Sync current location with backend for notifications
+      notificationService.syncLocationWithBackend();
 
-    // Initial location sync
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notificationService.onLocationChanged();
-    });
+      // Listen for location changes
+      weatherProvider.addListener(() {
+        notificationService.onLocationChanged();
+      });
+
+      locationProvider.addListener(() {
+        // Sync location with backend when location provider changes
+        notificationService.onLocationChanged();
+      });
+
+      // Initial location sync
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notificationService.onLocationChanged();
+      });
+
+      // Auto-sun functionality removed - using single theme now
+    } catch (e) {
+      // Log error but don't crash the app
+      debugPrint('Error setting up provider connections: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sodak Weather',
-      theme: AppTheme.theme,
-      home: Consumer<OnboardingProvider>(
-        builder: (context, onboardingProvider, child) {
-          if (onboardingProvider.isLoading) {
-            // Show loading screen while checking onboarding status
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.textLight,
-                ),
-              ),
-            );
-          }
-          
-          // Show onboarding if not complete, otherwise show main app
-          return onboardingProvider.isComplete 
-              ? const MainAppContainer() 
-              : const OnboardingScreen();
-        },
-      ),
-      debugShowCheckedModeBanner: false,
-      // Routes for different screens
-      routes: const {},
-
-      // Performance settings
-      themeMode: ThemeMode
-          .dark, // Using dark theme helps with performance on OLED screens
-      // Uncomment during development to debug rendering issues
-      // showPerformanceOverlay: true,
-      // checkerboardRasterCacheImages: true, // Shows which images are cached
-      // checkerboardOffscreenLayers: true, // Shows saveLayer() usage
-
-      // Use minimal platform integration for better performance
-      builder: (context, child) {
-        // Apply text scaling for accessibility but limit for performance
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: const TextScaler.linear(
-              1.0,
-            ), // Fixed text scale factor prevents relayout
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'SoDak Weather',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.buildTheme(themeProvider.config),
+          home: Consumer<OnboardingProvider>(
+            builder: (context, onboardingProvider, child) {
+              if (onboardingProvider.isLoading) {
+                // Show loading screen while checking onboarding status
+                return Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                );
+              }
+              
+              // Show onboarding if not complete, otherwise show main app
+              return onboardingProvider.isComplete 
+                  ? Consumer<WeatherProvider>(
+                      builder: (context, weatherProvider, child) {
+                        // Show loading until weather provider is properly initialized
+                        if (!weatherProvider.isInitialized) {
+                          return Scaffold(
+                            body: Center(
+                              child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
+                          );
+                        }
+                        return const MainAppContainer();
+                      },
+                    )
+                  : const OnboardingScreen();
+            },
           ),
-          child: child!,
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: const TextScaler.linear(1.0),
+              ),
+              child: child!,
+            );
+          },
         );
       },
     );

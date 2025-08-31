@@ -16,7 +16,8 @@ class UIConstants {
   // Animation durations
   static const Duration animationFast = Duration(milliseconds: 200);
   static const Duration animationMedium = Duration(milliseconds: 250);
-  static const Duration animationSlow = Duration(milliseconds: 700);
+  static const Duration animationSlow = Duration(milliseconds: 350);
+  static const Duration pageTransition = Duration(milliseconds: 300);
   static const Duration delayShort = Duration(milliseconds: 500);
   static const Duration delayMedium = Duration(milliseconds: 1000);
   static const Duration delayLong = Duration(milliseconds: 2000);
@@ -55,11 +56,22 @@ class UIConstants {
 
   // Marker dimensions
   static const double markerSize = 4.0;
+  static const double mapMarkerSize = 24.0; // Size for map location markers
   static const double legendIconSize = 10.0;
 
   // Text field dimensions
   static const double textFieldHeight = 56.0;
 
+  // Border radius - standardized to 20px for modern consistency
+  static const double borderRadiusSmall = 12.0;
+  static const double borderRadiusStandard = 26.0;
+  static const double borderRadiusLarge = 28.0;
+  
+  // Elevation values for floating appearance
+  static const double elevationSubtle = 4.0;
+  static const double elevationModerate = 8.0;
+  static const double elevationProminent = 16.0;
+
   // Frosted glass gradient
-  static const List<Color> frostedGradient = [Color(0x15FFFFFF), Color(0x10FFFFFF)];
+  static const List<Color> frostedGradient = [Color(0x30FFFFFF), Color(0x20FFFFFF)];
 } 

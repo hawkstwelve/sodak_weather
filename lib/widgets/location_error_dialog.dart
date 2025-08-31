@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_settings/app_settings.dart';
 import '../providers/location_provider.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
 import '../constants/ui_constants.dart';
 
@@ -25,7 +25,7 @@ class LocationErrorDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: GlassCard(
-        useBlur: true,
+        priority: GlassCardPriority.prominent,
         child: Padding(
           padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
           child: Column(
@@ -35,36 +35,23 @@ class LocationErrorDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(UIConstants.spacingXLarge),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: UIConstants.opacityVeryLow),
+                  color: Theme.of(context).colorScheme.error.withValues(alpha: UIConstants.opacityVeryLow),
                   borderRadius: BorderRadius.circular(UIConstants.iconSizeLarge),
                 ),
                 child: Icon(
                   _getErrorIcon(),
-                  color: Colors.red,
+                  color: Theme.of(context).colorScheme.error,
                   size: UIConstants.iconSizeLarge,
                 ),
               ),
               const SizedBox(height: UIConstants.spacingXLarge),
 
               // Error Title
-              Text(
-                _getErrorTitle(),
-                style: AppTheme.headingSmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Builder(builder: (context) => Text(_getErrorTitle(), style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
               const SizedBox(height: UIConstants.spacingLarge),
 
               // Error Message
-              Text(
-                message,
-                style: AppTheme.bodyMedium.copyWith(
-                  color: Colors.white70,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Builder(builder: (context) => Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)), textAlign: TextAlign.center)),
               const SizedBox(height: UIConstants.spacingXXXLarge),
 
               // Action Buttons
@@ -80,12 +67,7 @@ class LocationErrorDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(UIConstants.spacingLarge),
                         ),
                       ),
-                      child: Text(
-                        'Cancel',
-                        style: AppTheme.bodyMedium.copyWith(
-                          color: Colors.white70,
-                        ),
-                      ),
+                      child: Builder(builder: (context) => Text('Cancel', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))))
                     ),
                   ),
                   const SizedBox(width: UIConstants.spacingLarge),
@@ -102,13 +84,7 @@ class LocationErrorDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(UIConstants.spacingLarge),
                         ),
                       ),
-                      child: Text(
-                        _getActionButtonText(),
-                        style: AppTheme.bodyMedium.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: Builder(builder: (context) => Text(_getActionButtonText(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black, fontWeight: FontWeight.w600))),
                     ),
                   ),
                 ],

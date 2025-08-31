@@ -7,7 +7,7 @@ import '../models/sd_city.dart';
 import '../services/almanac_service.dart';
 import '../providers/weather_provider.dart';
 import '../providers/location_provider.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/glass/glass_card.dart';
 import '../constants/ui_constants.dart';
 
@@ -104,142 +104,86 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final weatherProvider = Provider.of<WeatherProvider>(context);
-    final condition = weatherProvider.weatherData?.currentConditions?.textDescription;
-    final gradient = AppTheme.getGradientForCondition(condition);
-
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradient,
-        ),
-      ),
-      child: SafeArea(
-        child: FutureBuilder<AlmanacData?>(
-          future: _almanacDataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-                  child: Text(
-                    'Error loading almanac data: ${snapshot.error}',
-                    style: AppTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            }
-
-            final data = snapshot.data;
-            if (data == null) {
-              return Center(
-                child: Text(
-                  'No almanac data available.',
-                  style: AppTheme.bodyMedium,
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: _fetchAlmanacData,
-              child: SingleChildScrollView(
+    return SafeArea(
+      child: FutureBuilder<AlmanacData?>(
+        future: _almanacDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Builder(builder: (context) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)));
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
                 padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: UIConstants.spacingXLarge),
-                    GlassCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Today's Records", style: AppTheme.headingSmall),
-                            const SizedBox(height: UIConstants.spacingXLarge),
-                            _buildRecordRow(
-                              'Record High',
-                              '${data.recordHighTemp.round()}°',
-                              data.recordHighYear,
-                              Icons.trending_up,
-                            ),
-                            _buildRecordRow(
-                              'Record Low',
-                              '${data.recordLowTemp.round()}°',
-                              data.recordLowYear,
-                              Icons.trending_down,
-                            ),
-                            _buildRecordRow(
-                              'Record Precip',
-                              '${data.recordPrecip.toStringAsFixed(2)}"',
-                              data.recordPrecipYear,
-                              Icons.water_drop,
-                              isPrecip: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: UIConstants.spacingXXXLarge),
-                    GlassCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Today's Averages", style: AppTheme.headingSmall),
-                            const SizedBox(height: UIConstants.spacingXLarge),
-                            _buildAverageRow(
-                              'Average High',
-                              '${data.averageHigh.round()}°',
-                              Icons.trending_up,
-                            ),
-                            _buildAverageRow(
-                              'Average Low',
-                              '${data.averageLow.round()}°',
-                              Icons.trending_down,
-                            ),
-                            _buildAverageRow(
-                              'Average Precip',
-                              '${data.averagePrecipitation.toStringAsFixed(2)}"',
-                              Icons.water_drop,
-                              isPrecip: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: UIConstants.spacingXLarge),
-                    GlassCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("This Day Through the Years", style: AppTheme.headingSmall),
-                            const SizedBox(height: UIConstants.spacingXLarge),
-                            SizedBox(
-                              height: UIConstants.cardHeightXXLarge,
-                              child: _buildChart(context, data),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: Builder(builder: (context) => Text('Error loading almanac data: ${snapshot.error}', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center)),
               ),
             );
-          },
-        ),
+          }
+          final AlmanacData? data = snapshot.data;
+          if (data == null) {
+            return Center(child: Builder(builder: (context) => Text('No almanac data available.', style: Theme.of(context).textTheme.bodyMedium)));
+          }
+          return RefreshIndicator(
+            onRefresh: _fetchAlmanacData,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: UIConstants.spacingXLarge),
+                  GlassCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Builder(builder: (context) => Text("Today's Records", style: Theme.of(context).textTheme.headlineSmall)),
+                          const SizedBox(height: UIConstants.spacingXLarge),
+                          _buildRecordRow('Record High', '${data.recordHighTemp.round()}°', data.recordHighYear, Icons.trending_up),
+                          _buildRecordRow('Record Low', '${data.recordLowTemp.round()}°', data.recordLowYear, Icons.trending_down),
+                          _buildRecordRow('Record Precip', '${data.recordPrecip.toStringAsFixed(2)}"', data.recordPrecipYear, Icons.water_drop, isPrecip: true),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: UIConstants.spacingXXXLarge),
+                  GlassCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Builder(builder: (context) => Text("Today's Averages", style: Theme.of(context).textTheme.headlineSmall)),
+                          const SizedBox(height: UIConstants.spacingXLarge),
+                          _buildAverageRow('Average High', '${data.averageHigh.round()}°', Icons.trending_up),
+                          _buildAverageRow('Average Low', '${data.averageLow.round()}°', Icons.trending_down),
+                          _buildAverageRow('Average Precip', '${data.averagePrecipitation.toStringAsFixed(2)}"', Icons.water_drop, isPrecip: true),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: UIConstants.spacingXLarge),
+                  GlassCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Builder(builder: (context) => Text('This Day Through the Years', style: Theme.of(context).textTheme.headlineSmall)),
+                          const SizedBox(height: UIConstants.spacingXLarge),
+                          SizedBox(
+                            height: UIConstants.cardHeightXXLarge,
+                            child: _buildChart(context, data),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -250,7 +194,7 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTheme.bodyLarge),
+          Builder(builder: (context) => Text(label, style: Theme.of(context).textTheme.bodyLarge)),
           Row(
             children: [
               Icon(
@@ -259,9 +203,9 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
                 size: 18,
               ),
               const SizedBox(width: 8),
-              Text(value, style: AppTheme.bodyLarge),
+              Builder(builder: (context) => Text(value, style: Theme.of(context).textTheme.bodyLarge)),
               const SizedBox(width: 4),
-              Text('($year)', style: AppTheme.bodySmall.copyWith(color: Colors.white70)),
+              Builder(builder: (context) => Text('($year)', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70))),
             ],
           ),
         ],
@@ -275,7 +219,7 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTheme.bodyLarge),
+          Builder(builder: (context) => Text(label, style: Theme.of(context).textTheme.bodyLarge)),
           Row(
             children: [
               Icon(
@@ -284,7 +228,7 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
                 size: 18,
               ),
               const SizedBox(width: 8),
-              Text(value, style: AppTheme.bodyLarge),
+              Builder(builder: (context) => Text(value, style: Theme.of(context).textTheme.bodyLarge)),
             ],
           ),
         ],
@@ -314,7 +258,7 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
       majorGridLines: MajorGridLines(width: 0.5, color: Colors.white.withAlpha((0.2 * 255).round())),
       axisLine: const AxisLine(width: 0),
       majorTickLines: const MajorTickLines(size: 0),
-      labelStyle: AppTheme.bodySmall,
+      labelStyle: Theme.of(context).textTheme.bodySmall,
     );
   }
 
@@ -324,8 +268,8 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
       majorGridLines: const MajorGridLines(width: 0),
       axisLine: const AxisLine(width: 0),
       majorTickLines: const MajorTickLines(size: 0),
-      labelStyle: AppTheme.bodySmall,
-      title: AxisTitle(text: 'Temperature (°F)', textStyle: AppTheme.bodySmall),
+      labelStyle: Theme.of(context).textTheme.bodySmall,
+      title: AxisTitle(text: 'Temperature (°F)', textStyle: Theme.of(context).textTheme.bodySmall),
     );
   }
 
@@ -340,8 +284,8 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
       axisLine: const AxisLine(width: 0),
       majorTickLines: const MajorTickLines(size: 0),
       majorGridLines: const MajorGridLines(width: 0),
-      labelStyle: AppTheme.bodySmall,
-      title: AxisTitle(text: 'Precip (in)', textStyle: AppTheme.bodySmall),
+      labelStyle: Theme.of(context).textTheme.bodySmall,
+      title: AxisTitle(text: 'Precip (in)', textStyle: Theme.of(context).textTheme.bodySmall),
     );
   }
 
@@ -399,7 +343,7 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
     return Legend(
       isVisible: true,
       position: LegendPosition.bottom,
-      textStyle: AppTheme.bodySmall,
+      textStyle: Theme.of(context).textTheme.bodySmall,
       iconHeight: 10,
       iconWidth: 10,
       overflowMode: LegendItemOverflowMode.wrap,
@@ -415,8 +359,8 @@ class _AlmanacScreenState extends State<AlmanacScreen> {
       tooltipDisplayMode: TrackballDisplayMode.groupAllPoints,
       tooltipSettings: InteractiveTooltip(
         enable: true,
-        color: AppTheme.glassCardColor,
-        textStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textLight),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+        textStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         format: 'point.x\nseries.name: point.y',
       ),
     );

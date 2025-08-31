@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+// import '../../theme/app_theme.dart';
 import '../../constants/ui_constants.dart';
 
 class ChatMessageBubble extends StatelessWidget {
@@ -25,15 +25,7 @@ class ChatMessageBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            const CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primaryMedium,
-              child: Icon(
-                Icons.cloud,
-                color: AppTheme.textLight,
-                size: 20,
-              ),
-            ),
+            CircleAvatar(radius: 16, backgroundColor: Theme.of(context).colorScheme.primary, child: Icon(Icons.cloud, color: Theme.of(context).colorScheme.onPrimary, size: 20)),
             const SizedBox(width: UIConstants.spacingMedium),
           ],
           Flexible(
@@ -43,9 +35,7 @@ class ChatMessageBubble extends StatelessWidget {
               ),
               padding: const EdgeInsets.all(UIConstants.spacingLarge),
               decoration: BoxDecoration(
-                color: isUser 
-                    ? Colors.white.withValues(alpha: 0.2) 
-                    : Colors.grey[600]!.withValues(alpha: 0.4),
+                color: isUser ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -55,64 +45,53 @@ class ChatMessageBubble extends StatelessWidget {
                   ),
                 ],
               ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    isTyping
-                        ? Row(
-                            children: [
-                              const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.textLight),
-                                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  isTyping
+                      ? Row(
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onSurface),
                               ),
-                              const SizedBox(width: UIConstants.spacingMedium),
-                              Text(
-                                'AI is analyzing weather data...',
-                                style: AppTheme.bodyMedium,
+                            ),
+                            const SizedBox(width: UIConstants.spacingMedium),
+                            Text('AI is analyzing weather data...', style: Theme.of(context).textTheme.bodyMedium),
+                          ],
+                        )
+                      : Text(
+                          content,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                            shadows: [
+                              const Shadow(
+                                blurRadius: 2,
+                                color: Colors.black26,
+                                offset: Offset(0, 1),
                               ),
                             ],
-                          )
-                        : Text(
-                            content,
-                            style: AppTheme.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              shadows: [
-                                const Shadow(
-                                  blurRadius: 2,
-                                  color: Colors.black26,
-                                  offset: Offset(0, 1),
-                                ),
-                              ],
-                            ),
                           ),
-                    const SizedBox(height: UIConstants.spacingSmall),
-                    Text(
-                      _formatTimestamp(timestamp),
-                      style: AppTheme.bodySmall.copyWith(
-                        color: AppTheme.textMedium,
-                        fontSize: 10,
-                      ),
+                        ),
+                  const SizedBox(height: UIConstants.spacingSmall),
+                  Text(
+                    _formatTimestamp(timestamp),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontSize: 10,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
           ),
           if (isUser) ...[
             const SizedBox(width: UIConstants.spacingMedium),
-            const CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primaryLight,
-              child: Icon(
-                Icons.person,
-                color: AppTheme.textLight,
-                size: 20,
-              ),
-            ),
+            CircleAvatar(radius: 16, backgroundColor: Theme.of(context).colorScheme.tertiary, child: Icon(Icons.person, color: Theme.of(context).colorScheme.onTertiary, size: 20)),
           ],
         ],
       ),

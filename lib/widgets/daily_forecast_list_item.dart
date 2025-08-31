@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 
 import '../constants/ui_constants.dart';
 import '../models/weather_data.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../utils/weather_utils.dart';
 import 'dialogs/daily_forecast_detail_dialog.dart';
-import 'glass/glass_card.dart';
+
 
 class DailyForecastListItem extends StatelessWidget {
   final DateTime date;
@@ -32,63 +32,62 @@ class DailyForecastListItem extends StatelessWidget {
     final String shortForecast = representative?.shortForecast ?? '';
     final String trailingTemps = _formatHighLow(dayPeriod, nightPeriod);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: UIConstants.spacingXLarge),
-      child: GestureDetector(
-        onTap: () => showDailyForecastDetailDialog(
-          context: context,
-          date: date,
-          dayPeriod: dayPeriod,
-          nightPeriod: nightPeriod,
-          iconAsset: iconAsset,
+    return GestureDetector(
+      onTap: () => showDailyForecastDetailDialog(
+        context: context,
+        date: date,
+        dayPeriod: dayPeriod,
+        nightPeriod: nightPeriod,
+        iconAsset: iconAsset,
+      ),
+      child: Container(
+        color: Colors.transparent, // Explicit transparent background
+        child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: UIConstants.spacingStandard, // Reduced from spacingLarge
+          horizontal: UIConstants.spacingLarge, // Reduced from spacingXLarge
         ),
-        child: GlassCard(
-          useBlur: false,
-          opacity: UIConstants.opacityVeryLow,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: UIConstants.spacingLarge,
-              horizontal: UIConstants.spacingXLarge,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset(
+              iconAsset,
+              width: 36,
+              height: 36,
+              fit: BoxFit.contain,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  iconAsset,
-                  width: 36,
-                  height: 36,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(width: UIConstants.spacingXLarge),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        dayLabel,
-                        style: AppTheme.bodyBold,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: UIConstants.spacingTiny),
-                      Text(
-                        shortForecast,
-                        style: AppTheme.bodySmall,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+            const SizedBox(width: UIConstants.spacingLarge), // Reduced from spacingXLarge
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 0,
+                    child: Text(
+                      dayLabel,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                const SizedBox(width: UIConstants.spacingXLarge),
-                Text(
-                  trailingTemps,
-                  style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
+                  const SizedBox(width: UIConstants.spacingLarge), // Reduced from spacingXLarge
+                  Expanded(
+                    child: Text(
+                      shortForecast,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: UIConstants.spacingLarge), // Reduced from spacingXLarge
+            Text(
+              trailingTemps,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         ),
       ),
     );

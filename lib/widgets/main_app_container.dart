@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sidebarx/sidebarx.dart';
 import '../screens/weather_screen.dart';
 import '../screens/radar_screen.dart';
 import '../screens/afd_screen.dart';
@@ -11,11 +10,14 @@ import '../screens/weather_chat_screen.dart';
 import '../screens/settings_screen.dart';
 import '../providers/weather_provider.dart';
 import '../providers/location_provider.dart';
-import '../theme/app_theme.dart';
+import '../providers/theme_provider.dart';
+// import '../theme/app_theme.dart';
 import '../models/sd_city.dart';
 import '../widgets/location_error_dialog.dart';
 import '../config/navigation_config.dart';
 import '../constants/ui_constants.dart';
+import 'background/frosted_blob_background.dart';
+import 'custom_navigation_drawer.dart';
 
 class MainAppContainer extends StatefulWidget {
   const MainAppContainer({super.key});
@@ -26,174 +28,113 @@ class MainAppContainer extends StatefulWidget {
 
 class _MainAppContainerState extends State<MainAppContainer> {
   int _currentIndex = 0;
-  final SidebarXController _sidebarXController = SidebarXController(selectedIndex: 0, extended: false);
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isDrawerOpen = false;
 
   void _handleNavigation(int index) {
     if (index >= 0 && index < NavigationConfig.items.length) {
       setState(() => _currentIndex = index);
-      _sidebarXController.selectIndex(index);
+      _closeDrawer();
     }
+  }
+
+  void _openDrawer() {
+    setState(() => _isDrawerOpen = true);
+  }
+
+  void _closeDrawer() {
+    setState(() => _isDrawerOpen = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<WeatherProvider>(
-      builder: (context, weatherProvider, _) {
-        final condition = weatherProvider.weatherData?.currentConditions?.textDescription;
-        final gradient = AppTheme.getGradientForCondition(condition);
-        
-        return Scaffold(
-          key: _scaffoldKey,
-          extendBodyBehindAppBar: true,
-          backgroundColor: Colors.transparent,
-          drawer: SidebarX(
-            controller: _sidebarXController,
-            theme: SidebarXTheme(
-              width: 56,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: gradient,
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return Consumer2<WeatherProvider, LocationProvider>(
+      builder: (context, weatherProvider, locationProvider, child) {
+        // Show loading state if providers are not properly initialized
+        // Check both selectedCity and if the providers have been set up
+        if (weatherProvider.isLoading || !weatherProvider.isInitialized) {
+          return FrostedBlobBackground(
+            themeConfig: themeProvider.config,
+            child: Scaffold(
+              extendBodyBehindAppBar: true,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Initializing weather data...',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-                backgroundBlendMode: BlendMode.srcOver,
-              ),
-              iconTheme: IconThemeData(color: Colors.white.withValues(alpha: UIConstants.opacityHigh), size: 20),
-              selectedIconTheme: const IconThemeData(color: Colors.white, size: 20),
-              textStyle: TextStyle(color: Colors.white.withValues(alpha: UIConstants.opacityHigh)),
-              selectedTextStyle: const TextStyle(color: Colors.white),
-              itemDecoration: const BoxDecoration(),
-              selectedItemDecoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: UIConstants.opacityLow),
-                borderRadius: BorderRadius.circular(UIConstants.spacingXLarge),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: UIConstants.opacityLow),
-                    blurRadius: UIConstants.spacingXLarge,
-                  ),
-                ],
-                border: Border.all(color: Colors.white.withValues(alpha: UIConstants.opacityLow)),
               ),
             ),
-            extendedTheme: SidebarXTheme(
-              width: 250,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: gradient,
+          );
+        }
+
+        return FrostedBlobBackground(
+          themeConfig: themeProvider.config,
+          child: Stack(
+            children: [
+              // Main content
+              Scaffold(
+                extendBodyBehindAppBar: true,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                appBar: AppBar(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
+                  elevation: 0,
+                  title: Text(
+                    _getCurrentPageTitle(weatherProvider),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  actions: [
+                    _buildCitySelector(context),
+                    const SizedBox(width: UIConstants.spacingStandard),
+                  ],
+                  leading: IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: _openDrawer,
+                  ),
                 ),
-                backgroundBlendMode: BlendMode.srcOver,
+                body: _buildBody(),
               ),
-              textStyle: TextStyle(color: Colors.white.withValues(alpha: UIConstants.opacityHigh)),
-              selectedTextStyle: const TextStyle(color: Colors.white),
-              itemTextPadding: const EdgeInsets.only(left: UIConstants.spacingLarge, top: 0),
-              selectedItemTextPadding: const EdgeInsets.only(left: UIConstants.spacingLarge, top: 0),
-              itemDecoration: const BoxDecoration(),
-              selectedItemDecoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: UIConstants.opacityLow),
-                borderRadius: BorderRadius.circular(UIConstants.spacingXLarge),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: UIConstants.opacityLow),
-                    blurRadius: UIConstants.spacingXLarge,
-                  ),
-                ],
-                border: Border.all(color: Colors.white.withValues(alpha: UIConstants.opacityLow)),
+
+              // Light frosted drawer + scrim (self-contained)
+              CustomNavigationDrawer(
+                selectedIndex: _currentIndex,
+                onNavigationChanged: _handleNavigation,
+                isOpen: _isDrawerOpen,
+                onClose: _closeDrawer,
               ),
-            ),
-            headerBuilder: (context, extended) {
-              if (extended) {
-                // Full header for expanded state
-                return Container(
-                  padding: const EdgeInsets.fromLTRB(UIConstants.spacingXLarge, UIConstants.spacingXLarge, UIConstants.spacingXLarge, 0),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        height: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          image: const DecorationImage(
-                            image: AssetImage('assets/drawer_background.png'),
-                            fit: BoxFit.cover,
-                            opacity: UIConstants.opacityHigh,
-                          ),
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32.0),
-                        child: Text(
-                          'Sodak Weather',
-                          style: TextStyle(
-                            color: AppTheme.textLight,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                // No header for collapsed state
-                return const SizedBox.shrink();
-              }
-            },
-            items: NavigationConfig.items.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              return SidebarXItem(
-                icon: item.icon,
-                label: item.title,
-                onTap: () {
-                  Navigator.of(context).pop(); // Close the drawer
-                  _handleNavigation(index);
-                },
-              );
-            }).toList(),
-          ),
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            foregroundColor: AppTheme.textLight,
-            elevation: 0,
-            title: Text(_getCurrentPageTitle()),
-            actions: [
-              _buildCitySelector(context),
-              const SizedBox(width: UIConstants.spacingStandard),
             ],
-            leading: IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                _sidebarXController.setExtended(false); // Start collapsed
-                _scaffoldKey.currentState?.openDrawer();
-              },
-            ),
           ),
-          body: _buildBody(),
         );
       },
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    // Listen to sidebar selection changes
-    _sidebarXController.addListener(() {
-      final selectedIndex = _sidebarXController.selectedIndex;
-      if (selectedIndex != _currentIndex) {
-        _handleNavigation(selectedIndex);
-      }
-    });
-  }
-
-  String _getCurrentPageTitle() {
+  String _getCurrentPageTitle(WeatherProvider weatherProvider) {
     final currentItem = NavigationConfig.getItemByIndex(_currentIndex);
     if (currentItem?.screenId == 'weather') {
-      final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-      return '${weatherProvider.selectedCity.name} Weather';
+      if (weatherProvider.isUsingLocation) {
+        return 'Current Location Weather';
+      } else {
+        // Add null safety check for selectedCity
+        final cityName = weatherProvider.selectedCity.name;
+        return '$cityName Weather';
+      }
     } else if (currentItem?.screenId == 'weather_chat') {
       return 'AI Weather Chat';
     }
@@ -201,97 +142,104 @@ class _MainAppContainerState extends State<MainAppContainer> {
   }
 
   Widget _buildBody() {
-    final citySelectorWidget = _buildCitySelector(context);
-    
-    return IndexedStack(
-      index: _currentIndex,
-      children: [
-        WeatherPage(
-          citySelector: citySelectorWidget,
-          onNavigate: _handleNavigation,
-          currentScreenId: 'weather',
-        ),
-        RadarPage(
-          citySelector: citySelectorWidget,
-          onNavigate: _handleNavigation,
-          currentScreenId: 'radar',
-        ),
-        AFDScreen(
-          citySelector: citySelectorWidget,
-          onNavigate: _handleNavigation,
-          currentScreenId: 'afd',
-        ),
-        SpcOutlooksScreen(
-          citySelector: citySelectorWidget,
-          onNavigate: _handleNavigation,
-          currentScreenId: 'spc_outlooks',
-        ),
-        AlmanacScreen(
-          citySelector: citySelectorWidget,
-          onNavigate: _handleNavigation,
-          currentScreenId: 'almanac',
-        ),
-        AgricultureScreen(
-          citySelector: citySelectorWidget,
-          onNavigate: _handleNavigation,
-          currentScreenId: 'agriculture',
-        ),
-        const WeatherChatScreen(),
-        SettingsScreen(onNavigate: _handleNavigation),
-      ],
+    return Consumer<WeatherProvider>(
+      builder: (context, weatherProvider, child) {
+        // Don't render body if weather provider is not ready
+        final citySelectorWidget = _buildCitySelector(context);
+
+        return AnimatedSwitcher(
+          duration: UIConstants.pageTransition,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+          child: IndexedStack(
+            key: ValueKey(_currentIndex),
+            index: _currentIndex,
+            children: [
+              WeatherPage(
+                citySelector: citySelectorWidget,
+                onNavigate: _handleNavigation,
+                currentScreenId: 'weather',
+              ),
+              RadarPage(
+                citySelector: citySelectorWidget,
+                onNavigate: _handleNavigation,
+                currentScreenId: 'radar',
+              ),
+              AFDScreen(
+                citySelector: citySelectorWidget,
+                onNavigate: _handleNavigation,
+                currentScreenId: 'afd',
+              ),
+              SpcOutlooksScreen(
+                citySelector: citySelectorWidget,
+                onNavigate: _handleNavigation,
+                currentScreenId: 'spc_outlooks',
+              ),
+              AlmanacScreen(
+                citySelector: citySelectorWidget,
+                onNavigate: _handleNavigation,
+                currentScreenId: 'almanac',
+              ),
+              AgricultureScreen(
+                citySelector: citySelectorWidget,
+                onNavigate: _handleNavigation,
+                currentScreenId: 'agriculture',
+              ),
+              const WeatherChatScreen(),
+              SettingsScreen(onNavigate: _handleNavigation),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildCitySelector(BuildContext context) {
     return Consumer<WeatherProvider>(
-      builder: (context, weatherProvider, _) {
+      builder: (context, weatherProvider, child) {
         return Consumer<LocationProvider>(
-          builder: (context, locationProvider, _) {
-            final selectedCity = weatherProvider.selectedCity;
-            final isUsingLocation = weatherProvider.isUsingLocation;
-            final isLoading = locationProvider.isLoading;
-
+          builder: (context, locationProvider, child) {
             return GestureDetector(
-              onTap: isLoading ? null : () => _showCitySelectorDropdown(context, weatherProvider, locationProvider),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0x1AFFFFFF),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0x33FFFFFF)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isLoading)
-                      const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.loadingIndicatorColor),
-                        ),
-                      )
-                    else
-                      Icon(
-                        isUsingLocation ? Icons.my_location : Icons.location_on,
-                        color: Colors.white70,
-                        size: 14,
-                      ),
-                    const SizedBox(width: 3),
-                    Text(
-                      isLoading ? "Getting Location..." : (isUsingLocation ? "Your Location" : selectedCity.name),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                        color: AppTheme.textLight,
-                      ),
+              onTap: () => _showCitySelector(context, weatherProvider, locationProvider),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    weatherProvider.isUsingLocation ? Icons.my_location : Icons.location_on,
+                    color: Colors.white.withValues(alpha: 0.92),
+                    size: 18,
+                  ),
+                  const SizedBox(width: UIConstants.spacingSmall),
+                  Text(
+                    weatherProvider.isUsingLocation 
+                        ? 'Current Location'
+                        : weatherProvider.selectedCity.name,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.92),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(width: 3),
-                    if (!isLoading)
-                      const Icon(Icons.expand_more, color: Colors.white70, size: 14),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: UIConstants.spacingSmall),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.white.withValues(alpha: 0.92),
+                    size: 20,
+                  ),
+                ],
               ),
             );
           },
@@ -300,224 +248,330 @@ class _MainAppContainerState extends State<MainAppContainer> {
     );
   }
 
-  void _showCitySelectorDropdown(BuildContext context, WeatherProvider weatherProvider, LocationProvider locationProvider) {
+
+  void _showCitySelector(BuildContext context, WeatherProvider weatherProvider, LocationProvider locationProvider) {
+    // Safety check - don't show selector if providers are not ready
     final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    final buttonPosition = button.localToGlobal(Offset.zero, ancestor: overlay);
-    final screenWidth = MediaQuery.of(context).size.width;
-    const dropdownWidth = 250.0; // Max width of dropdown
+    final buttonPosition = button.localToGlobal(Offset.zero);
+    final buttonSize = button.size;
+    final screenSize = MediaQuery.of(context).size;
     
-    // Calculate left position to keep dropdown within screen bounds
-    double leftPosition = buttonPosition.dx;
-    if (leftPosition + dropdownWidth > screenWidth) {
-      leftPosition = screenWidth - dropdownWidth - 16; // 16px margin from right edge
+    // Calculate optimal position for the dropdown
+    final dropdownWidth = (screenSize.width * 0.8).clamp(280.0, 320.0);
+    final dropdownHeight = 400.0; // Approximate height for the city list
+    
+    // Start with right-aligned positioning (default)
+    double left = buttonPosition.dx + buttonSize.width - dropdownWidth;
+    double top = buttonPosition.dy + buttonSize.height + 2; // Reduced from 8 to 2 for tighter connection
+    
+    // Ensure dropdown doesn't go off the left edge
+    if (left < 16) {
+      left = 16;
     }
-    if (leftPosition < 16) {
-      leftPosition = 16; // 16px margin from left edge
+    
+    // Ensure dropdown doesn't go off the right edge
+    if (left + dropdownWidth > screenSize.width - 16) {
+      left = screenSize.width - dropdownWidth - 16;
     }
     
-    OverlayEntry? overlayEntry;
+    // Ensure dropdown doesn't go off the bottom edge
+    if (top + dropdownHeight > screenSize.height - 16) {
+      top = buttonPosition.dy - dropdownHeight - 2; // Reduced from 8 to 2 for tighter connection
+    }
     
-    overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          // Transparent overlay to catch taps outside the dropdown
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                overlayEntry?.remove();
-              },
-              child: Container(
-                color: Colors.transparent,
-              ),
-            ),
+    // Ensure dropdown doesn't go off the top edge
+    if (top < 16) {
+      top = 16;
+    }
+    
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (context) => _CitySelectorDialog(
+        weatherProvider: weatherProvider,
+        locationProvider: locationProvider,
+        position: Offset(left, top),
+      ),
+    );
+  }
+
+}
+
+class _CitySelectorDialog extends StatelessWidget {
+  final WeatherProvider weatherProvider;
+  final LocationProvider locationProvider;
+  final Offset position;
+
+  const _CitySelectorDialog({
+    required this.weatherProvider,
+    required this.locationProvider,
+    required this.position,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Full screen tap to close
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(color: Colors.transparent),
           ),
-          // The actual dropdown
-          Positioned(
-            left: leftPosition,
-            top: buttonPosition.dy + button.size.height + 8,
-            child: Material(
-              color: Colors.transparent,
-              child: GestureDetector(
-                onTap: () {
-                  // This prevents taps on the dropdown background from closing it
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.8), // Dark background for better contrast
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)), // Subtle white border
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minWidth: 200,
-                      maxWidth: 250,
-                      maxHeight: 400,
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Location option
-                          _buildMenuItem(
-                            context: context,
-                            icon: Icons.my_location,
-                            title: 'Use My Location',
-                            isSelected: weatherProvider.isUsingLocation,
-                            onTap: () async {
-                              overlayEntry?.remove();
-                              final success = await weatherProvider.fetchWeatherForLocation();
-                              if (!context.mounted) return;
-                              if (!success) {
-                                showLocationErrorDialog(
-                                  context: context,
-                                  errorType: locationProvider.errorType ?? LocationErrorType.unknown,
-                                  message: locationProvider.userFriendlyErrorMessage,
-                                  onRetry: () async {
-                                    final retrySuccess = await weatherProvider.fetchWeatherForLocation();
-                                    if (!context.mounted) return;
-                                    if (!retrySuccess) {
-                                      showLocationErrorDialog(
-                                        context: context,
-                                        errorType: locationProvider.errorType ?? LocationErrorType.unknown,
-                                        message: locationProvider.userFriendlyErrorMessage,
-                                      );
-                                    }
-                                  },
-                                );
-                              }
-                            },
-                            showIcon: false,
-                          ),
-                          
-                          // Refresh option if using location
-                          if (weatherProvider.isUsingLocation && locationProvider.isUsingCachedLocation)
-                            _buildMenuItem(
-                              context: context,
-                              icon: Icons.refresh,
-                              title: 'Refresh Location',
-                              isSelected: false,
-                              onTap: () async {
-                                overlayEntry?.remove();
-                                final success = await weatherProvider.refreshLocationWeather();
-                                if (!context.mounted) return;
-                                if (!success) {
-                                  showLocationErrorDialog(
-                                    context: context,
-                                    errorType: locationProvider.errorType ?? LocationErrorType.unknown,
-                                    message: locationProvider.userFriendlyErrorMessage,
-                                    onRetry: () async {
-                                      final retrySuccess = await weatherProvider.refreshLocationWeather();
-                                      if (!context.mounted) return;
-                                      if (!retrySuccess) {
-                                        showLocationErrorDialog(
-                                          context: context,
-                                          errorType: locationProvider.errorType ?? LocationErrorType.unknown,
-                                          message: locationProvider.userFriendlyErrorMessage,
-                                        );
-                                      }
-                                    },
-                                  );
-                                }
-                              },
-                              indent: true,
-                            ),
-                          
-                          // Divider
-                          if (weatherProvider.isUsingLocation && locationProvider.isUsingCachedLocation)
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              height: 1,
-                              color: Colors.white24,
-                            ),
-                          
-                          // City options
-                          ...SDCities.allCities.map((city) {
-                            final isSelected = city.name == weatherProvider.selectedCity.name && !weatherProvider.isUsingLocation;
-                            return _buildMenuItem(
-                              context: context,
-                              icon: Icons.location_on,
-                              title: '${city.name}, SD',
-                              isSelected: isSelected,
-                              onTap: () {
-                                overlayEntry?.remove();
-                                weatherProvider.setSelectedCity(city);
-                              },
-                              showIcon: false,
-                            );
-                          }).toList(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        ),
+        // Positioned city selector
+        Positioned(
+          left: position.dx,
+          top: position.dy,
+          child: _CitySelectorPanel(
+            weatherProvider: weatherProvider,
+            locationProvider: locationProvider,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CitySelectorPanel extends StatelessWidget {
+  final WeatherProvider weatherProvider;
+  final LocationProvider locationProvider;
+
+  const _CitySelectorPanel({
+    required this.weatherProvider,
+    required this.locationProvider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = UIConstants.borderRadiusStandard;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Make dropdown width responsive to screen size
+    final dropdownWidth = (screenWidth * 0.8).clamp(280.0, 320.0);
+
+    return Container(
+      width: dropdownWidth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        color: Colors.white.withValues(alpha: 0.35), // Increased from 0.22 to 0.35 for more frosted appearance
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(UIConstants.borderRadiusStandard),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              Color.fromRGBO(0, 0, 0, 0.08),
+              Color.fromRGBO(0, 0, 0, 0.03),
+              Color.fromRGBO(0, 0, 0, 0.00),
+            ],
+            stops: [0.0, 0.45, 0.80],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(UIConstants.spacingLarge),
+          child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Current location option
+            _buildCityMenuItem(
+              context: context,
+              icon: Icons.my_location,
+              title: 'Use Current Location',
+              isSelected: weatherProvider.isUsingLocation,
+              onTap: () async {
+                Navigator.of(context).pop();
+                await _handleCurrentLocationSelection(context, locationProvider, weatherProvider);
+              },
+            ),
+            // Divider
+            if (weatherProvider.isUsingLocation && locationProvider.isUsingCachedLocation)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                height: 1,
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
+            // City options
+            ...SDCities.allCities.map((city) {
+              final isSelected = city.name == (weatherProvider.selectedCity.name) && !weatherProvider.isUsingLocation;
+              return _buildCityMenuItem(
+                context: context,
+                icon: Icons.location_on,
+                title: '${city.name}, SD',
+                isSelected: isSelected,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  weatherProvider.setSelectedCity(city);
+                },
+                showIcon: false,
+              );
+            }),
+          ],
+        ),
+        ),
+      ),
     );
-
-    // Add overlay entry
-    Overlay.of(context).insert(overlayEntry);
-
-    // Note: Menu items will handle closing the dropdown when tapped
-    // No global tap detection needed as it interferes with menu item taps
   }
 
-  Widget _buildMenuItem({
+  Widget _buildCityMenuItem({
     required BuildContext context,
     required IconData icon,
     required String title,
     required bool isSelected,
     required VoidCallback onTap,
-    bool indent = false,
     bool showIcon = true,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              if (indent) const SizedBox(width: 24),
-              Icon(
-                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                color: AppTheme.textLight,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              if (showIcon)
+    final radius = UIConstants.borderRadiusStandard;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: UIConstants.spacingTiny),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radius),
+          splashColor: Theme.of(context).colorScheme.secondary.withValues(alpha: UIConstants.opacityVeryLow),
+          highlightColor: Theme.of(context).colorScheme.secondary.withValues(alpha: UIConstants.opacityVeryLow),
+          child: AnimatedContainer(
+            duration: UIConstants.animationFast,
+            padding: const EdgeInsets.symmetric(
+              horizontal: UIConstants.spacingLarge,
+              vertical: UIConstants.spacingStandard,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              color: isSelected
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.transparent,
+              border: isSelected
+                  ? Border.all(
+                      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.60),
+                      width: 1,
+                    )
+                  : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              children: [
                 Icon(
                   icon,
-                  color: AppTheme.textLight,
-                  size: 16,
+                  size: 22,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.secondary
+                      : Colors.white.withValues(alpha: 0.92),
                 ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: isSelected ? AppTheme.textLight : AppTheme.textMedium,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
+                const SizedBox(width: UIConstants.spacingLarge),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.secondary
+                              : Colors.white.withValues(alpha: 0.92),
+                        ),
                   ),
                 ),
-              ),
-            ],
+                if (isSelected)
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  Future<void> _handleCurrentLocationSelection(
+    BuildContext context, 
+    LocationProvider locationProvider, 
+    WeatherProvider weatherProvider
+  ) async {
+    // Safety check - don't proceed if providers are not ready
+    try {
+      // Get current location
+      final success = await locationProvider.getCurrentLocation();
+      
+      if (success && locationProvider.currentLocation != null) {
+        // Successfully got location, now fetch weather data directly
+        await weatherProvider.fetchAllWeatherDataForCoordinates(
+          locationProvider.currentLocation!.latitude,
+          locationProvider.currentLocation!.longitude,
+        );
+        
+        // Set the weather provider to use location without fetching location again
+        weatherProvider.setUsingLocation(true);
+        
+        // Show success feedback
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Location updated to current location'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } else {
+        // Show error dialog with proper error type
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            barrierColor: Colors.black.withValues(alpha: 0.45),
+            builder: (context) => LocationErrorDialog(
+              errorType: locationProvider.errorType ?? LocationErrorType.unknown,
+              message: locationProvider.errorMessage ?? 'Failed to get current location.',
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Show error dialog
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierColor: Colors.black.withValues(alpha: 0.45),
+          builder: (context) => LocationErrorDialog(
+            errorType: LocationErrorType.unknown,
+            message: 'Error getting location: $e',
+          ),
+        );
+      }
+    }
+  }
+
+
 }
+

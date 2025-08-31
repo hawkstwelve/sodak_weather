@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
-import '../providers/weather_provider.dart';
-import '../theme/app_theme.dart';
+// import 'package:provider/provider.dart';
+// import '../providers/weather_provider.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/glass/glass_card.dart';
 import '../constants/ui_constants.dart';
 import '../services/location_service.dart';
@@ -34,6 +34,9 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
       final permission = await LocationService.checkPermission();
       final isEnabled = await LocationService.isLocationServiceEnabled();
       
+      // Check if widget is still mounted before calling setState
+      if (!mounted) return;
+      
       setState(() {
         _permissionStatus = permission;
         _isLocationServiceEnabled = isEnabled;
@@ -64,7 +67,7 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
   }
 
   Color _getPermissionStatusColor() {
-    if (_permissionStatus == null) return AppTheme.textMedium;
+    if (_permissionStatus == null) return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
     
     switch (_permissionStatus!) {
       case LocationPermission.denied:
@@ -74,7 +77,7 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
       case LocationPermission.always:
         return Colors.green;
       case LocationPermission.unableToDetermine:
-        return AppTheme.textMedium;
+        return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
     }
   }
 
@@ -134,48 +137,35 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final weatherProvider = Provider.of<WeatherProvider>(context);
-    final condition = weatherProvider.weatherData?.currentConditions?.textDescription;
-    final gradient = AppTheme.getGradientForCondition(condition);
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Location Preferences'),
         backgroundColor: Colors.transparent,
-        foregroundColor: AppTheme.textLight,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: gradient,
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: FractionallySizedBox(
-              widthFactor: 0.95,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: GlassCard(
-                  useBlur: true,
-                  contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView(
-                          shrinkWrap: true,
-                          children: [
-                            _buildLocationServicesSection(),
-                            const SizedBox(height: UIConstants.spacingXLarge),
-                            _buildPermissionStatusSection(),
-                            const SizedBox(height: UIConstants.spacingXLarge),
-                            _buildPermissionActionsSection(),
-                          ],
-                        ),
-                ),
+      body: SafeArea(
+        child: Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.95,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: GlassCard(
+                priority: GlassCardPriority.prominent,
+                contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView(
+                        shrinkWrap: true,
+                        children: [
+                          _buildLocationServicesSection(),
+                          const SizedBox(height: UIConstants.spacingXLarge),
+                          _buildPermissionStatusSection(),
+                          const SizedBox(height: UIConstants.spacingXLarge),
+                          _buildPermissionActionsSection(),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -188,35 +178,21 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Location Services',
-          style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-        ),
+        Text('Location Services', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: UIConstants.spacingMedium),
         Row(
           children: [
             Icon(
               _isLocationServiceEnabled ? Icons.location_on : Icons.location_off,
-              color: _isLocationServiceEnabled ? Colors.green : Colors.red,
+              color: _isLocationServiceEnabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
             ),
             const SizedBox(width: UIConstants.spacingMedium),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _isLocationServiceEnabled ? 'Enabled' : 'Disabled',
-                    style: AppTheme.bodyMedium.copyWith(
-                      color: _isLocationServiceEnabled ? Colors.green : Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    _isLocationServiceEnabled
-                        ? 'Your device\'s location services are enabled'
-                        : 'Your device\'s location services are disabled. Please enable them in your device settings.',
-                    style: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
-                  ),
+                  Text(_isLocationServiceEnabled ? 'Enabled' : 'Disabled', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: _isLocationServiceEnabled ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
+                  Text(_isLocationServiceEnabled ? 'Your device\'s location services are enabled' : 'Your device\'s location services are disabled. Please enable them in your device settings.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                 ],
               ),
             ),
@@ -230,15 +206,12 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'App Permission Status',
-          style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-        ),
+        Text('App Permission Status', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: UIConstants.spacingMedium),
         Container(
           padding: const EdgeInsets.all(UIConstants.spacingLarge),
           decoration: BoxDecoration(
-            color: AppTheme.primaryDark.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8.0),
             border: Border.all(
               color: _getPermissionStatusColor().withValues(alpha: 0.5),
@@ -259,21 +232,12 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
                   ),
                   const SizedBox(width: UIConstants.spacingMedium),
                   Expanded(
-                    child: Text(
-                      _getPermissionStatusText(),
-                      style: AppTheme.bodyMedium.copyWith(
-                        color: _getPermissionStatusColor(),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text(_getPermissionStatusText(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: _getPermissionStatusColor(), fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
               const SizedBox(height: UIConstants.spacingMedium),
-              Text(
-                _getPermissionDescription(),
-                style: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
-              ),
+              Text(_getPermissionDescription(), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             ],
           ),
         ),
@@ -285,38 +249,17 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Actions',
-          style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-        ),
+        Text('Actions', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: UIConstants.spacingMedium),
         if (_permissionStatus == LocationPermission.denied) ...[
-          ListTile(
-            leading: const Icon(Icons.location_on, color: AppTheme.textLight),
-            title: const Text('Request Location Permission', style: TextStyle(color: AppTheme.textLight)),
-            subtitle: const Text('Ask for permission to access your location', style: TextStyle(color: AppTheme.textMedium)),
-            onTap: _requestPermission,
-          ),
+          ListTile(leading: Icon(Icons.location_on, color: Theme.of(context).colorScheme.onSurface), title: Text('Request Location Permission', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface)), subtitle: Text('Ask for permission to access your location', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))), onTap: _requestPermission),
         ] else if (_permissionStatus == LocationPermission.deniedForever) ...[
-          ListTile(
-            leading: const Icon(Icons.settings, color: AppTheme.textLight),
-            title: const Text('Open App Settings', style: TextStyle(color: AppTheme.textLight)),
-            subtitle: const Text('Enable location permission in device settings', style: TextStyle(color: AppTheme.textMedium)),
-            onTap: _openAppSettings,
-          ),
+          ListTile(leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface), title: Text('Open App Settings', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface)), subtitle: Text('Enable location permission in device settings', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))), onTap: _openAppSettings),
         ] else ...[
-          ListTile(
-            leading: const Icon(Icons.refresh, color: AppTheme.textLight),
-            title: const Text('Refresh Permission Status', style: TextStyle(color: AppTheme.textLight)),
-            subtitle: const Text('Check current permission status', style: TextStyle(color: AppTheme.textMedium)),
-            onTap: _loadPermissionStatus,
-          ),
+          ListTile(leading: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onSurface), title: Text('Refresh Permission Status', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface)), subtitle: Text('Check current permission status', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))), onTap: _loadPermissionStatus),
         ],
         const SizedBox(height: UIConstants.spacingMedium),
-        ListTile(
-          leading: const Icon(Icons.info, color: AppTheme.textLight),
-          title: const Text('About Location Access', style: TextStyle(color: AppTheme.textLight)),
-          subtitle: const Text('Learn how location is used in this app', style: TextStyle(color: AppTheme.textMedium)),
+        ListTile(leading: Icon(Icons.info, color: Theme.of(context).colorScheme.onSurface), title: Text('About Location Access', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface)), subtitle: Text('Learn how location is used in this app', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
           onTap: () {
             showDialog(
               context: context,
@@ -325,7 +268,7 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
                 elevation: 0,
                 child: SingleChildScrollView(
                   child: GlassCard(
-                    useBlur: true,
+                    priority: GlassCardPriority.prominent,
                     child: Padding(
                       padding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
                       child: Column(
@@ -334,42 +277,27 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.info, color: AppTheme.textLight, size: 28),
+                              Icon(Icons.info, color: Theme.of(context).colorScheme.onSurface, size: 28),
                               const SizedBox(width: UIConstants.spacingMedium),
                               Expanded(
-                                child: Text(
-                                  'About Location Access',
-                                  style: AppTheme.headingMedium,
-                                ),
+                                child: Text('About Location Access', style: Theme.of(context).textTheme.headlineMedium),
                               ),
                             ],
                           ),
                           const SizedBox(height: UIConstants.spacingXLarge),
-                          Text(
-                            'This app uses your location to provide accurate weather information and alerts for your area. Location data is used to:',
-                            style: AppTheme.bodyMedium,
-                          ),
+                          Text('This app uses your location to provide accurate weather information and alerts for your area. Location data is used to:', style: Theme.of(context).textTheme.bodyMedium),
                           const SizedBox(height: UIConstants.spacingMedium),
                           _buildBulletPoint('Get current weather conditions'),
                           _buildBulletPoint('Provide location-specific weather forecasts'),
                           _buildBulletPoint('Send weather alerts for your area'),
                           _buildBulletPoint('Show relevant radar data'),
                           const SizedBox(height: UIConstants.spacingMedium),
-                          Text(
-                            'Your location data is not shared with third parties and is only used for weather services.',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: AppTheme.textMedium,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
+                          Text('Your location data is not shared with third parties and is only used for weather services.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontStyle: FontStyle.italic)),
                           const SizedBox(height: UIConstants.spacingXLarge),
                           Center(
                             child: TextButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              child: const Text(
-                                'Close',
-                                style: TextStyle(color: AppTheme.textBlue),
-                              ),
+                              child: Text('Close', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                             ),
                           ),
                         ],
@@ -391,13 +319,10 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.circle, size: 8, color: AppTheme.textLight),
+          Builder(builder: (context) => Icon(Icons.circle, size: 8, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(width: UIConstants.spacingMedium),
           Expanded(
-            child: Text(
-              text,
-              style: AppTheme.bodyMedium,
-            ),
+            child: Builder(builder: (context) => Text(text, style: Theme.of(context).textTheme.bodyMedium)),
           ),
         ],
       ),

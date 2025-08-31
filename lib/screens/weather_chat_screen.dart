@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_chat_provider.dart';
 import '../providers/weather_provider.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/weather_chat/weather_suggestion_chips.dart';
 import '../widgets/weather_chat/chat_message_bubble.dart';
 
@@ -84,22 +84,13 @@ class _WeatherChatScreenState extends State<WeatherChatScreen> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
-    final weatherProvider = Provider.of<WeatherProvider>(context);
-    final weatherData = weatherProvider.weatherData;
-    final currentConditions = weatherData?.currentConditions;
-    final gradient = AppTheme.getGradientForCondition(currentConditions?.textDescription);
+    // final weatherProvider = Provider.of<WeatherProvider>(context);
+    // final weatherData = weatherProvider.weatherData;
+    // final currentConditions = weatherData?.currentConditions;
     
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradient,
-        ),
-      ),
-      child: SafeArea(
-        child: Column(
-          children: [
+    return SafeArea(
+      child: Column(
+        children: [
             // Chat interface
             Expanded(
               child: _buildChatInterface(),
@@ -116,8 +107,7 @@ class _WeatherChatScreenState extends State<WeatherChatScreen> with WidgetsBindi
             
             // Custom input field
             _buildCustomInput(),
-          ],
-        ),
+        ],
       ),
     );
   }

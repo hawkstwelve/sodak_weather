@@ -5,7 +5,7 @@ import '../providers/soil_moisture_provider.dart';
 import '../widgets/drought_monitor_card.dart';
 import '../widgets/soil_moisture_card.dart';
 import '../widgets/glass/glass_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../constants/ui_constants.dart';
 
 /// Agriculture screen displaying agricultural weather information
@@ -41,20 +41,8 @@ class _AgricultureScreenState extends State<AgricultureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryDark,
-              AppTheme.primaryMedium,
-              AppTheme.primaryLight,
-            ],
-          ),
-        ),
-        child: SafeArea(
-                  child: RefreshIndicator(
+      body: SafeArea(
+        child: RefreshIndicator(
           onRefresh: () async {
             final droughtProvider = Provider.of<DroughtMonitorProvider>(context, listen: false);
             final soilMoistureProvider = Provider.of<SoilMoistureProvider>(context, listen: false);
@@ -63,8 +51,7 @@ class _AgricultureScreenState extends State<AgricultureScreen> {
               soilMoistureProvider.refreshData(),
             ]);
           },
-            child: _buildContent(),
-          ),
+          child: _buildContent(),
         ),
       ),
     );
@@ -101,8 +88,7 @@ class _AgricultureScreenState extends State<AgricultureScreen> {
 
   Widget _buildComingSoonSection() {
     return GlassCard(
-      useBlur: false,
-      opacity: UIConstants.opacityLow,
+      priority: GlassCardPriority.standard,
       child: Container(
         padding: const EdgeInsets.all(UIConstants.spacingXLarge),
         child: Column(
@@ -110,23 +96,13 @@ class _AgricultureScreenState extends State<AgricultureScreen> {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.agriculture,
-                  color: AppTheme.textMedium,
-                  size: UIConstants.iconSizeMedium,
-                ),
+                Builder(builder: (context) => Icon(Icons.agriculture, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), size: UIConstants.iconSizeMedium)),
                 const SizedBox(width: UIConstants.spacingMedium),
-                Text(
-                  'Coming Soon',
-                  style: AppTheme.headingSmall,
-                ),
+                Builder(builder: (context) => Text('Coming Soon', style: Theme.of(context).textTheme.headlineSmall)),
               ],
             ),
             const SizedBox(height: UIConstants.spacingLarge),
-            Text(
-              'Additional agricultural features will be available soon:',
-              style: AppTheme.bodyMedium,
-            ),
+            Builder(builder: (context) => Text('Additional agricultural features will be available soon:', style: Theme.of(context).textTheme.bodyMedium)),
             const SizedBox(height: UIConstants.spacingLarge),
             _buildFeatureItem('Growing Degree Days', 'Crop development tracking'),
             _buildFeatureItem('Frost Alerts', 'Early and late frost warnings'),
@@ -148,24 +124,15 @@ class _AgricultureScreenState extends State<AgricultureScreen> {
             width: UIConstants.spacingSmall,
             height: UIConstants.spacingSmall,
             margin: const EdgeInsets.only(top: UIConstants.spacingMedium),
-            decoration: BoxDecoration(
-              color: AppTheme.textMedium,
-              borderRadius: BorderRadius.circular(UIConstants.spacingTiny),
-            ),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(UIConstants.spacingTiny)),
           ),
           const SizedBox(width: UIConstants.spacingMedium),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTheme.bodyBold,
-                ),
-                Text(
-                  description,
-                  style: AppTheme.bodySmall,
-                ),
+                Builder(builder: (context) => Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold))),
+                Builder(builder: (context) => Text(description, style: Theme.of(context).textTheme.bodySmall)),
               ],
             ),
           ),

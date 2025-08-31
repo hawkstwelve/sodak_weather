@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_preferences_provider.dart';
-import '../theme/app_theme.dart';
+import '../providers/theme_provider.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/glass/glass_card.dart';
+import '../widgets/background/frosted_blob_background.dart';
 import 'notification_preferences_screen.dart';
 import 'location_preferences_screen.dart';
-import '../providers/weather_provider.dart';
+import 'notification_history_screen.dart';
+// import '../providers/weather_provider.dart';
+import '../screens/theme_settings_screen.dart';
 import '../constants/ui_constants.dart';
+import '../models/notification_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(int)? onNavigate;
@@ -20,19 +25,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    final weatherProvider = Provider.of<WeatherProvider>(context);
-    final condition = weatherProvider.weatherData?.currentConditions?.textDescription;
-    final gradient = AppTheme.getGradientForCondition(condition);
-    
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradient,
-        ),
-      ),
-      child: SafeArea(
+    return SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(UIConstants.spacingXLarge),
           child: Column(
@@ -40,7 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const SizedBox(height: UIConstants.spacingXLarge),
               GlassCard(
-                useBlur: true,
+                priority: GlassCardPriority.prominent,
                 contentPadding: const EdgeInsets.all(UIConstants.spacingXLarge),
                 child: ChangeNotifierProvider(
                   create: (_) => NotificationPreferencesProvider()..loadPreferences(),
@@ -55,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                       
                       if (error != null) {
-                        return Center(child: Text('Error: $error', style: AppTheme.bodyLarge));
+                        return Center(child: Builder(builder: (context) => Text('Error: $error', style: Theme.of(context).textTheme.bodyLarge)));
                       }
                       
                       if (prefs == null) {
@@ -63,16 +56,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
 
                       return ListTile(
-                        leading: const Icon(Icons.notifications, color: AppTheme.textLight),
-                        title: const Text('Notifications', style: TextStyle(color: AppTheme.textLight)),
-                        trailing: const Icon(Icons.chevron_right, color: AppTheme.textLight),
+                        leading: Builder(builder: (context) => Icon(Icons.notifications, color: Theme.of(context).colorScheme.onSurface)),
+                        title: Builder(builder: (context) => Text('Notifications', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface))),
+                        trailing: Builder(builder: (context) => Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface)),
                         onTap: () {
                           if (!mounted) return;
+                          final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => ChangeNotifierProvider.value(
-                                value: provider,
-                                child: const NotificationPreferencesScreen(),
+                              builder: (_) => FrostedBlobBackground(
+                                themeConfig: themeProvider.config,
+                                child: ChangeNotifierProvider.value(
+                                  value: provider,
+                                  child: const NotificationPreferencesScreen(),
+                                ),
                               ),
                             ),
                           );
@@ -84,17 +81,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: UIConstants.spacingXLarge),
               GlassCard(
-                useBlur: true,
+                priority: GlassCardPriority.prominent,
                 contentPadding: const EdgeInsets.all(UIConstants.spacingXLarge),
                 child: ListTile(
-                  leading: const Icon(Icons.location_on, color: AppTheme.textLight),
-                  title: const Text('Location', style: TextStyle(color: AppTheme.textLight)),
-                  trailing: const Icon(Icons.chevron_right, color: AppTheme.textLight),
+                  leading: Builder(builder: (context) => Icon(Icons.location_on, color: Theme.of(context).colorScheme.onSurface)),
+                  title: Builder(builder: (context) => Text('Location', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface))),
+                  trailing: Builder(builder: (context) => Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface)),
                   onTap: () {
                     if (!mounted) return;
+                    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const LocationPreferencesScreen(),
+                        builder: (_) => FrostedBlobBackground(
+                          themeConfig: themeProvider.config,
+                          child: const LocationPreferencesScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: UIConstants.spacingXLarge),
+              GlassCard(
+                priority: GlassCardPriority.prominent,
+                contentPadding: const EdgeInsets.all(UIConstants.spacingXLarge),
+                child: ListTile(
+                  leading: Builder(builder: (context) => Icon(Icons.palette, color: Theme.of(context).colorScheme.onSurface)),
+                  title: Builder(builder: (context) => Text('Theme', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface))),
+                  trailing: Builder(builder: (context) => Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface)),
+                  onTap: () {
+                    if (!mounted) return;
+                    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => FrostedBlobBackground(
+                          themeConfig: themeProvider.config,
+                          child: const ThemeSettingsScreen(),
+                        ),
                       ),
                     );
                   },
@@ -104,7 +127,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 } 

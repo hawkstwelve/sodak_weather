@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../constants/ui_constants.dart';
 import '../../models/weather_data.dart';
-import '../../theme/app_theme.dart';
+// import '../../theme/app_theme.dart';
 import '../glass/glass_card.dart';
 
 /// Shows a modal dialog with detailed information for a single day's forecast.
@@ -37,7 +37,7 @@ void showDailyForecastDetailDialog({
                 const SizedBox(height: UIConstants.spacingXLarge),
                 Text(
                   DateFormat('EEEE, MMM d').format(date),
-                  style: AppTheme.headingMedium,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: UIConstants.spacingXLarge),
                 if (dayPeriod != null) _buildDayForecast(dayPeriod),
@@ -45,10 +45,7 @@ void showDailyForecastDetailDialog({
                 const SizedBox(height: UIConstants.spacingXLarge),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(color: AppTheme.textBlue),
-                  ),
+                  child: Text('Close', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                 ),
               ],
             ),
@@ -65,67 +62,39 @@ Widget _buildDayForecast(ForecastPeriod period) {
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.wb_sunny, color: AppTheme.iconDay, size: 20),
+          Builder(builder: (context) => Icon(Icons.wb_sunny, color: Theme.of(context).colorScheme.secondary, size: 20)),
           const SizedBox(width: UIConstants.spacingSmall),
-          Text(
-            'Daytime',
-            style: AppTheme.bodyLarge.copyWith(
-              color: AppTheme.iconDay,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Builder(builder: (context) => Text('Daytime', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold))),
         ],
       ),
       const SizedBox(height: UIConstants.spacingStandard),
-      Text(
-        'High: ${period.temperature}°F',
-        style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-      ),
+      Builder(builder: (context) => Text('High: ${period.temperature}°F', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))),
       const SizedBox(height: UIConstants.spacingStandard),
-      Text(
-        period.shortForecast,
-        style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-        textAlign: TextAlign.center,
-      ),
+      Builder(builder: (context) => Text(period.shortForecast, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
       if (period.precipProbability != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingStandard),
-          child: Text(
-            'Precipitation: ${period.precipProbability}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Precipitation: ${period.precipProbability}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.windSpeed.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Wind: ${_formatWind(period.windSpeed, period.windDirection, period.windGust)}',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Wind: ${_formatWind(period.windSpeed, period.windDirection, period.windGust)}', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.relativeHumidity != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Humidity: ${period.relativeHumidity}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Humidity: ${period.relativeHumidity}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.cloudCover != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Cloud Cover: ${period.cloudCover}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Cloud Cover: ${period.cloudCover}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.thunderstormProbability != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Thunderstorm Probability: ${period.thunderstormProbability}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Thunderstorm Probability: ${period.thunderstormProbability}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
     ],
   );
@@ -138,67 +107,39 @@ Widget _buildNightForecast(ForecastPeriod period) {
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.nights_stay, color: AppTheme.iconNight, size: 20),
+          Builder(builder: (context) => Icon(Icons.nights_stay, color: Theme.of(context).colorScheme.tertiary, size: 20)),
           const SizedBox(width: UIConstants.spacingSmall),
-          Text(
-            'Overnight',
-            style: AppTheme.bodyLarge.copyWith(
-              color: AppTheme.iconNight,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Builder(builder: (context) => Text('Overnight', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.bold))),
         ],
       ),
       const SizedBox(height: UIConstants.spacingStandard),
-      Text(
-        'Low: ${period.temperature}°F',
-        style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-      ),
+      Builder(builder: (context) => Text('Low: ${period.temperature}°F', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold))),
       const SizedBox(height: UIConstants.spacingStandard),
-      Text(
-        period.shortForecast,
-        style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-        textAlign: TextAlign.center,
-      ),
+      Builder(builder: (context) => Text(period.shortForecast, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
       if (period.precipProbability != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingStandard),
-          child: Text(
-            'Precipitation: ${period.precipProbability}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Precipitation: ${period.precipProbability}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.windSpeed.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Wind: ${_formatWind(period.windSpeed, period.windDirection, period.windGust)}',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Wind: ${_formatWind(period.windSpeed, period.windDirection, period.windGust)}', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.relativeHumidity != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Humidity: ${period.relativeHumidity}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Humidity: ${period.relativeHumidity}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.cloudCover != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Cloud Cover: ${period.cloudCover}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Cloud Cover: ${period.cloudCover}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
       if (period.thunderstormProbability != null)
         Padding(
           padding: const EdgeInsets.only(top: UIConstants.spacingSmall),
-          child: Text(
-            'Thunderstorm Probability: ${period.thunderstormProbability}%',
-            style: AppTheme.bodyMedium,
-          ),
+          child: Builder(builder: (context) => Text('Thunderstorm Probability: ${period.thunderstormProbability}%', style: Theme.of(context).textTheme.bodyMedium)),
         ),
     ],
   );

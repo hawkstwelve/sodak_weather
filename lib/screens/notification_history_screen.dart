@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/backend_service.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/glass/glass_card.dart';
-import '../providers/weather_provider.dart';
+// import '../providers/weather_provider.dart';
 import '../constants/ui_constants.dart';
 
 class NotificationHistoryScreen extends StatefulWidget {
@@ -26,6 +26,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   }
 
   Future<void> _loadNotificationHistory() async {
+    // Check if widget is still mounted before calling setState
+    if (!mounted) return;
+    
     setState(() {
       _loading = true;
       _error = null;
@@ -35,11 +38,17 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       final backendService = Provider.of<BackendService>(context, listen: false);
       final notifications = await backendService.loadNotificationHistory();
       
+      // Check if widget is still mounted before calling setState
+      if (!mounted) return;
+      
       setState(() {
         _notifications = notifications.map((n) => n.toJson()).toList();
         _loading = false;
       });
     } catch (e) {
+      // Check if widget is still mounted before calling setState
+      if (!mounted) return;
+      
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -49,14 +58,12 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final weatherProvider = Provider.of<WeatherProvider>(context);
-    final condition = weatherProvider.weatherData?.currentConditions?.textDescription;
-    final gradient = AppTheme.getGradientForCondition(condition);
+    // final weatherProvider = Provider.of<WeatherProvider>(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
-      body: _buildMainContainer(gradient),
+      body: _buildMainContainer(),
     );
   }
 
@@ -64,7 +71,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     return AppBar(
       title: const Text('Notification History'),
       backgroundColor: Colors.transparent,
-      foregroundColor: AppTheme.textLight,
+      foregroundColor: Theme.of(context).colorScheme.onSurface,
       elevation: 0,
       actions: [
         IconButton(
@@ -75,26 +82,17 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     );
   }
 
-  Widget _buildMainContainer(List<Color> gradient) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradient,
-        ),
-      ),
-      child: SafeArea(
-        child: Center(
-          child: FractionallySizedBox(
-            widthFactor: 0.95,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: GlassCard(
-                useBlur: true,
-                contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                child: _buildContent(),
-              ),
+  Widget _buildMainContainer() {
+    return SafeArea(
+      child: Center(
+        child: FractionallySizedBox(
+          widthFactor: 0.95,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: GlassCard(
+              priority: GlassCardPriority.prominent,
+              contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+              child: _buildContent(),
             ),
           ),
         ),
@@ -127,9 +125,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Error loading notifications', style: AppTheme.bodyLarge),
+          Text('Error loading notifications', style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: UIConstants.spacingStandard),
-          Text(_error!, style: AppTheme.bodyMedium),
+          Text(_error!, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: UIConstants.spacingXLarge),
           ElevatedButton(
             onPressed: _loadNotificationHistory,
@@ -145,23 +143,11 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.notifications_none,
-            size: UIConstants.iconSizeLarge,
-            color: AppTheme.textMedium,
-          ),
+          Icon(Icons.notifications_none, size: UIConstants.iconSizeLarge, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
           const SizedBox(height: UIConstants.spacingXLarge),
-          Text(
-            'No notifications yet',
-            style: AppTheme.headingSmall,
-            textAlign: TextAlign.center,
-          ),
+          Text('No notifications yet', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
           const SizedBox(height: UIConstants.spacingStandard),
-          Text(
-            'Weather alerts will appear here when received',
-            style: AppTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
+          Text('Weather alerts will appear here when received', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
         ],
       ),
     );
@@ -191,7 +177,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       child: ListTile(
         title: Text(
           alertType,
-          style: AppTheme.bodyLarge,
+          style: Theme.of(context).textTheme.bodyLarge,
         ),
         subtitle: _buildNotificationSubtitle(areaDesc, timestamp),
         leading: _getAlertIcon(alertType),
@@ -203,15 +189,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          areaDesc,
-          style: AppTheme.bodyMedium,
-        ),
+        Text(areaDesc, style: Theme.of(context).textTheme.bodyMedium),
         if (timestamp != null)
-          Text(
-            _formatTimestamp(timestamp),
-            style: AppTheme.bodySmall,
-          ),
+          Text(_formatTimestamp(timestamp), style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

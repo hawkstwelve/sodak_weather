@@ -2,18 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/hourly_forecast.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import 'glass/glass_card.dart';
 import '../constants/ui_constants.dart';
 
 class PrecipitationChart extends StatefulWidget {
   final List<HourlyForecast> hourlyForecast;
-  final bool useBlur;
 
   const PrecipitationChart({
     super.key,
     required this.hourlyForecast,
-    this.useBlur = false,
   });
 
   @override
@@ -86,66 +84,45 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
       return const SizedBox.shrink();
     }
 
-    return GlassCard(
-      useBlur: widget.useBlur,
-      opacity: UIConstants.opacityVeryLow,
-      child: Padding(
-        padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.water_drop, color: AppTheme.textLight, size: 20),
-                const SizedBox(width: UIConstants.spacingStandard),
-                Text(
-                  '24-Hour Precipitation',
-                  style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: UIConstants.spacingXLarge),
-            SizedBox(
-              height: UIConstants.chartHeight,
-              child: SfCartesianChart(
-                plotAreaBorderColor: Colors.white,
-                plotAreaBorderWidth: 1,
-                backgroundColor: Colors.transparent,
-                primaryXAxis: DateTimeAxis(
-                  majorGridLines: const MajorGridLines(width: 0),
-                  axisLine: const AxisLine(width: 0),
-                  majorTickLines: const MajorTickLines(size: 0),
-                  labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
-                  intervalType: DateTimeIntervalType.hours,
-                  dateFormat: DateFormat('ha'),
-                  edgeLabelPlacement: EdgeLabelPlacement.shift,
-                ),
-                primaryYAxis: NumericAxis(
-                  name: 'probability',
-                  minimum: 0,
-                  maximum: 100,
-                  interval: 25,
-                  axisLine: const AxisLine(width: 1, color: Colors.white),
-                  majorTickLines: const MajorTickLines(
-                    size: 0,
-                    color: Colors.white,
+    return RepaintBoundary(
+      child: GlassCard(
+        priority: GlassCardPriority.standard,
+        child: Padding(
+          padding: const EdgeInsets.all(UIConstants.spacingSmall), // Reduced from spacingStandard
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Builder(builder: (context) => Icon(Icons.water_drop, color: Theme.of(context).colorScheme.onSurface, size: 20)),
+                  const SizedBox(width: UIConstants.spacingStandard), // Reduced from spacingStandard
+                  Text(
+                    '24-Hour Precipitation',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  majorGridLines: const MajorGridLines(
-                    width: 1,
-                    color: Color(0x40FFFFFF),
+                ],
+              ),
+              const SizedBox(height: UIConstants.spacingStandard), // Reduced from spacingLarge
+              SizedBox(
+                height: UIConstants.chartHeight,
+                child: SfCartesianChart(
+                  plotAreaBorderColor: Colors.white,
+                  plotAreaBorderWidth: 1,
+                  backgroundColor: Colors.transparent,
+                  primaryXAxis: DateTimeAxis(
+                    majorGridLines: const MajorGridLines(width: 0),
+                    axisLine: const AxisLine(width: 0),
+                    majorTickLines: const MajorTickLines(size: 0),
+                    labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                    intervalType: DateTimeIntervalType.hours,
+                    dateFormat: DateFormat('ha'),
+                    edgeLabelPlacement: EdgeLabelPlacement.shift,
                   ),
-                  minorTickLines: const MinorTickLines(size: 0),
-                  minorGridLines: const MinorGridLines(width: 0),
-                  labelFormat: '{value}%',
-                  labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
-                ),
-                axes: <ChartAxis>[
-                  NumericAxis(
-                    name: 'amount',
-                    opposedPosition: true,
+                  primaryYAxis: NumericAxis(
+                    name: 'probability',
                     minimum: 0,
-                    maximum: _maxAmount,
-                    interval: _maxAmount / 4,
+                    maximum: 100,
+                    interval: 25,
                     axisLine: const AxisLine(width: 1, color: Colors.white),
                     majorTickLines: const MajorTickLines(
                       size: 0,
@@ -157,29 +134,51 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
                     ),
                     minorTickLines: const MinorTickLines(size: 0),
                     minorGridLines: const MinorGridLines(width: 0),
-                    labelFormat: '{value} in',
-                    labelStyle: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
+                    labelFormat: '{value}%',
+                    labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
-                ],
-                series: _getSeries(),
-                trackballBehavior: _trackballBehavior,
-                enableAxisAnimation: true,
-                zoomPanBehavior: ZoomPanBehavior(
-                  enablePinching: true,
-                  enablePanning: true,
-                  enableDoubleTapZooming: true,
+                  axes: <ChartAxis>[
+                    NumericAxis(
+                      name: 'amount',
+                      opposedPosition: true,
+                      minimum: 0,
+                      maximum: _maxAmount,
+                      interval: _maxAmount / 4,
+                      axisLine: const AxisLine(width: 1, color: Colors.white),
+                      majorTickLines: const MajorTickLines(
+                        size: 0,
+                        color: Colors.white,
+                      ),
+                      majorGridLines: const MajorGridLines(
+                        width: 1,
+                        color: Color(0x40FFFFFF),
+                      ),
+                      minorTickLines: const MinorTickLines(size: 0),
+                      minorGridLines: const MinorGridLines(width: 0),
+                      labelFormat: '{value} in',
+                      labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                    ),
+                  ],
+                  series: _getSeries(),
+                  trackballBehavior: _trackballBehavior,
+                  enableAxisAnimation: true,
+                  zoomPanBehavior: ZoomPanBehavior(
+                    enablePinching: true,
+                    enablePanning: true,
+                    enableDoubleTapZooming: true,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: UIConstants.spacingLarge),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildLegendItem('Probability', Colors.blue),
-                _buildLegendItem('Amount', Colors.amber),
-              ],
-            ),
-          ],
+              const SizedBox(height: UIConstants.spacingStandard),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildLegendItem('Probability', Colors.blue),
+                  _buildLegendItem('Amount', Colors.amber),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -234,7 +233,7 @@ class _PrecipitationChartState extends State<PrecipitationChart> {
         const SizedBox(width: UIConstants.spacingSmall),
         Text(
           label,
-          style: AppTheme.bodySmall.copyWith(color: AppTheme.textMedium),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
         ),
       ],
     );

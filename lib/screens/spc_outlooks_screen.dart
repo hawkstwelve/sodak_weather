@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/glass/glass_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../models/sd_city.dart';
 import '../models/spc_outlook.dart';
 import '../providers/weather_provider.dart';
@@ -52,116 +52,84 @@ class _SpcOutlooksScreenState extends State<SpcOutlooksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get provider for city and gradient data
-    final weatherProvider = Provider.of<WeatherProvider>(context);
-    final condition = weatherProvider.weatherData?.currentConditions?.textDescription;
-    final gradientColors = AppTheme.getGradientForCondition(condition);
+    return SafeArea(
+      child: FutureBuilder<List<SpcOutlook>>(
+        future: _futureData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Builder(builder: (context) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary)));
+          }
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradientColors,
-        ),
-      ),
-      child: SafeArea(
-        child: FutureBuilder<List<SpcOutlook>>(
-          future: _futureData,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
-            }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+                child: Builder(builder: (context) => Text('Error loading outlooks: ${snapshot.error}', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center)),
+              ),
+            );
+          }
 
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-                  child: Text(
-                    'Error loading outlooks: ${snapshot.error}',
-                    style: AppTheme.bodyMedium,
-                    textAlign: TextAlign.center,
+          final data = snapshot.data ?? [];
+          if (data.isEmpty) {
+            return Center(child: Builder(builder: (context) => Text('No outlooks available.', style: Theme.of(context).textTheme.bodyMedium)));
+          }
+
+          return RefreshIndicator(
+            onRefresh: _refreshData,
+            child: ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (context, idx) {
+                final outlook = data[idx];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: UIConstants.spacingLarge,
+                    horizontal: UIConstants.spacingXLarge,
                   ),
-                ),
-              );
-            }
-
-            final data = snapshot.data ?? [];
-            if (data.isEmpty) {
-              return Center(
-                child: Text(
-                  'No outlooks available.',
-                  style: AppTheme.bodyMedium,
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: _refreshData,
-              child: ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, idx) {
-                  final outlook = data[idx];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: UIConstants.spacingLarge,
-                      horizontal: UIConstants.spacingXLarge,
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _expanded[idx] = !_expanded[idx];
-                        });
-                      },
-                      child: GlassCard(
-                        child: Padding(
-                          padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Day ${outlook.day} Outlook',
-                                      style: AppTheme.headingSmall,
-                                    ),
-                                  ),
-                                  Icon(
-                                    _expanded[idx] ? Icons.expand_less : Icons.expand_more,
-                                    color: AppTheme.textLight,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: UIConstants.spacingStandard),
-                              Image.network(
-                                outlook.imgUrl,
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return const Center(child: CircularProgressIndicator(color: AppTheme.loadingIndicatorColor));
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(child: Icon(Icons.error));
-                                },
-                              ),
-                              if (_expanded[idx]) ...[
-                                const SizedBox(height: UIConstants.spacingXLarge),
-                                Text(
-                                  outlook.discussion,
-                                  style: AppTheme.bodyMedium,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _expanded[idx] = !_expanded[idx];
+                      });
+                    },
+                    child: GlassCard(
+                      child: Padding(
+                        padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Builder(builder: (context) => Text('Day ${outlook.day} Outlook', style: Theme.of(context).textTheme.headlineSmall)),
                                 ),
+                                Builder(builder: (context) => Icon(_expanded[idx] ? Icons.expand_less : Icons.expand_more, color: Theme.of(context).colorScheme.onSurface)),
                               ],
+                            ),
+                            const SizedBox(height: UIConstants.spacingStandard),
+                            Image.network(
+                              outlook.imgUrl,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return Builder(builder: (context) => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))));
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(child: Icon(Icons.error));
+                              },
+                            ),
+                            if (_expanded[idx]) ...[
+                              const SizedBox(height: UIConstants.spacingXLarge),
+                              Builder(builder: (context) => Text(outlook.discussion, style: Theme.of(context).textTheme.bodyMedium)),
                             ],
-                          ),
+                          ],
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

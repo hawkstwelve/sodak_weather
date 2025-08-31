@@ -52,6 +52,8 @@ class WeatherChatService {
 
       final aiResponse = response['result'] ?? 'No response generated';
       
+      // Log the response for debugging
+      
       // Create chat message
       final chatMessage = ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),

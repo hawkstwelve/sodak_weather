@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/weather_data.dart';
 
@@ -95,32 +94,7 @@ class WeatherUtils {
     return {'sunrise': null, 'sunset': null};
   }
 
-  /// Map weather condition to background gradient colors
-  static List<Color> getGradientForCondition(String? condition) {
-    if (condition == null) {
-      // Default (Clear)
-      return [const Color(0xFF23235B), const Color(0xFF6D3CA4), const Color(0xFFFF7E5F)];
-    }
-
-    final c = condition.toLowerCase();
-
-    if (c.contains('clear') || c.contains('sunny')) {
-      return [const Color(0xFF23235B), const Color(0xFF6D3CA4), const Color(0xFFFF7E5F)];
-    } else if (c.contains('partly') || c.contains('mostly') && c.contains('cloud')) {
-      return [const Color(0xFF3A3D5C), const Color(0xFF7B5EA7), const Color(0xFFF7B2B7)];
-    } else if (c.contains('cloud')) {
-      return [const Color(0xFF43455C), const Color(0xFF8A7CA8)];
-    } else if (c.contains('rain') || c.contains('shower') || c.contains('thunder')) {
-      return [const Color(0xFF23235B), const Color(0xFF3A5BA0), const Color(0xFF7B8FA3)];
-    } else if (c.contains('snow') || c.contains('sleet')) {
-      return [const Color(0xFF3A5BA0), const Color(0xFFA3C9F7), const Color(0xFFFFFFFF)];
-    } else if (c.contains('fog') || c.contains('mist') || c.contains('haze')) {
-      return [const Color(0xFF6E7B8B), const Color(0xFFB0B8C1)];
-    }
-
-    // Fallback
-    return [const Color(0xFF23235B), const Color(0xFF6D3CA4), const Color(0xFFFF7E5F)];
-  }
+  // Deprecated API removed: getGradientForCondition
 
   /// Group forecast periods by date, separating day and night
   static Map<String, Map<String, ForecastPeriod?>> groupForecastByDate(List<ForecastPeriod> forecast) {
