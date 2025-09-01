@@ -81,7 +81,12 @@ Future<void> main() async {
           create: (_) => BackendService(),
         ),
         ChangeNotifierProvider<OnboardingProvider>(
-          create: (_) => OnboardingProvider(),
+          create: (_) {
+            final provider = OnboardingProvider();
+            // Initialize the provider immediately
+            provider.initialize();
+            return provider;
+          },
         ),
         ChangeNotifierProvider<DroughtMonitorProvider>(
           create: (_) => DroughtMonitorProvider(),
@@ -129,7 +134,12 @@ class _MyAppState extends State<MyApp> {
 
       // Initialize onboarding provider with timeout protection
       try {
-        onboardingProvider.initialize();
+        await onboardingProvider.initialize().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            // Continue even if onboarding initialization fails
+          },
+        );
       } catch (e) {
         // Continue even if onboarding initialization fails
       }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Provider to manage onboarding state and completion
@@ -27,12 +27,23 @@ class OnboardingProvider with ChangeNotifier {
       _isComplete = prefs.getBool(_onboardingCompleteKey) ?? false;
       _locationPermissionRequested = prefs.getBool(_locationPermissionRequestedKey) ?? false;
       _notificationPermissionRequested = prefs.getBool(_notificationPermissionRequestedKey) ?? false;
+      
+      // Debug logging
+      if (kDebugMode) {
+        print('OnboardingProvider: isComplete = $_isComplete');
+        print('OnboardingProvider: locationPermissionRequested = $_locationPermissionRequested');
+        print('OnboardingProvider: notificationPermissionRequested = $_notificationPermissionRequested');
+      }
     } catch (e) {
       // If there's an error loading preferences, assume onboarding is not complete
       // This is especially important for release builds where errors might be handled differently
       _isComplete = false;
       _locationPermissionRequested = false;
       _notificationPermissionRequested = false;
+      
+      if (kDebugMode) {
+        print('OnboardingProvider: Error loading preferences: $e');
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -50,8 +61,15 @@ class OnboardingProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_onboardingCompleteKey, true);
       _isComplete = true;
+      
+      if (kDebugMode) {
+        print('OnboardingProvider: Marked onboarding as complete');
+      }
     } catch (e) {
       // Handle error silently - onboarding will show again on next app launch
+      if (kDebugMode) {
+        print('OnboardingProvider: Error marking onboarding complete: $e');
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

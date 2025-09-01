@@ -11,18 +11,11 @@ class ThemeSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeProvider themeProvider = Provider.of<ThemeProvider>(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Theme Colors'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(UIConstants.spacingXLarge),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(UIConstants.spacingXLarge),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             // Color Selection Section
             GlassCard(
               priority: GlassCardPriority.standard,
@@ -127,11 +120,9 @@ class ThemeSettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-
           ],
         ),
-      ),
-    );
+      );
   }
 
   void _pickCustomColor(BuildContext context, ThemeProvider provider, {required bool isPrimary}) {

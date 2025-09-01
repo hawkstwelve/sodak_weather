@@ -191,6 +191,176 @@ class SimpleFrostedBackground extends StatelessWidget {
   }
 }
 
+/// Static version for settings screens - no animations, better performance
+class StaticFrostedBackground extends StatelessWidget {
+  final Widget child;
+  final ThemeConfig themeConfig;
+
+  const StaticFrostedBackground({
+    super.key,
+    required this.child,
+    required this.themeConfig,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        // Beautiful static gradient base using theme colors
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            themeConfig.primary.withValues(alpha: 0.12),
+            themeConfig.accent.withValues(alpha: 0.08),
+            themeConfig.primary.withValues(alpha: 0.06),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Static blob layer (no animations)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: StaticBlobPainter(
+                primaryColor: themeConfig.primary,
+                accentColor: themeConfig.accent,
+              ),
+              size: Size.infinite,
+            ),
+          ),
+          
+          // Frosted glass overlay for depth
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: 1.0,
+                sigmaY: 1.0,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.02),
+                      Colors.white.withValues(alpha: 0.01),
+                      Colors.white.withValues(alpha: 0.02),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Content layer
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Static blob painter - no animations, better performance
+class StaticBlobPainter extends CustomPainter {
+  final Color primaryColor;
+  final Color accentColor;
+
+  const StaticBlobPainter({
+    required this.primaryColor,
+    required this.accentColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Create base gradient background
+    _paintBaseGradient(canvas, size);
+    
+    // Paint static blobs (no animation)
+    _paintStaticBlobs(canvas, size);
+  }
+
+  void _paintBaseGradient(Canvas canvas, Size size) {
+    final Paint gradientPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          primaryColor.withValues(alpha: 0.06),
+          accentColor.withValues(alpha: 0.04),
+          primaryColor.withValues(alpha: 0.03),
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), gradientPaint);
+  }
+
+  void _paintStaticBlobs(Canvas canvas, Size size) {
+    // Define static blob configurations (no animation values)
+    final List<BlobConfig> blobs = [
+      BlobConfig(
+        color: primaryColor,
+        size: size.width * 0.4,
+        centerX: size.width * 0.2,
+        centerY: size.height * 0.3,
+        opacity: 0.15,
+        blurRadius: 60.0,
+      ),
+      BlobConfig(
+        color: primaryColor,
+        size: size.width * 0.35,
+        centerX: size.width * 0.8,
+        centerY: size.height * 0.7,
+        opacity: 0.12,
+        blurRadius: 50.0,
+      ),
+      BlobConfig(
+        color: accentColor,
+        size: size.width * 0.25,
+        centerX: size.width * 0.6,
+        centerY: size.height * 0.2,
+        opacity: 0.12,
+        blurRadius: 40.0,
+      ),
+      BlobConfig(
+        color: accentColor,
+        size: size.width * 0.28,
+        centerX: size.width * 0.1,
+        centerY: size.height * 0.8,
+        opacity: 0.10,
+        blurRadius: 45.0,
+      ),
+    ];
+
+    // Paint each blob
+    for (final BlobConfig blob in blobs) {
+      _paintBlob(canvas, blob);
+    }
+  }
+
+  void _paintBlob(Canvas canvas, BlobConfig config) {
+    final Paint blobPaint = Paint()
+      ..color = config.color.withValues(alpha: config.opacity)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.blurRadius);
+
+    // Create simple circular blob for better performance
+    canvas.drawCircle(
+      Offset(config.centerX, config.centerY),
+      config.size / 2,
+      blobPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(StaticBlobPainter oldDelegate) {
+    return oldDelegate.primaryColor != primaryColor ||
+           oldDelegate.accentColor != accentColor;
+  }
+}
+
 /// Performance monitor for blob animations
 class BlobPerformanceMonitor {
   static bool _isPerformanceMode = false;

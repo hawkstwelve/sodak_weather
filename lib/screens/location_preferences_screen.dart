@@ -137,36 +137,27 @@ class _LocationPreferencesScreenState extends State<LocationPreferencesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Location Preferences'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: FractionallySizedBox(
-            widthFactor: 0.95,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: GlassCard(
-                priority: GlassCardPriority.prominent,
-                contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView(
-                        shrinkWrap: true,
-                        children: [
-                          _buildLocationServicesSection(),
-                          const SizedBox(height: UIConstants.spacingXLarge),
-                          _buildPermissionStatusSection(),
-                          const SizedBox(height: UIConstants.spacingXLarge),
-                          _buildPermissionActionsSection(),
-                        ],
-                      ),
-              ),
+    return SafeArea(
+      child: Center(
+        child: FractionallySizedBox(
+          widthFactor: 0.95,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: GlassCard(
+              priority: GlassCardPriority.prominent,
+              contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        _buildLocationServicesSection(),
+                        const SizedBox(height: UIConstants.spacingXLarge),
+                        _buildPermissionStatusSection(),
+                        const SizedBox(height: UIConstants.spacingXLarge),
+                        _buildPermissionActionsSection(),
+                      ],
+                    ),
             ),
           ),
         ),

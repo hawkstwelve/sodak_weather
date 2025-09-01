@@ -211,39 +211,30 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     final error = provider.error;
     // final weatherProvider = Provider.of<WeatherProvider>(context);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Notification Preferences'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: FractionallySizedBox(
-            widthFactor: 0.95,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: GlassCard(
-                priority: GlassCardPriority.prominent,
-                contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
-                child: loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : error != null
-                        ? Center(child: Text('Error: $error', style: Theme.of(context).textTheme.bodyLarge))
-                        : prefs == null
-                            ? const Center(child: Text('No preferences found.'))
-                            : ListView(
-                                shrinkWrap: true,
-                                children: [
-                                  _buildNotificationPermissionSection(),
-                                  _buildAlertTypesSection(prefs, provider),
-                                  _buildDoNotDisturbSection(prefs, provider),
-                                  _buildNotificationHistorySection(),
-                                ],
-                              ),
-              ),
+    return SafeArea(
+      child: Center(
+        child: FractionallySizedBox(
+          widthFactor: 0.95,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: GlassCard(
+              priority: GlassCardPriority.prominent,
+              contentPadding: const EdgeInsets.all(UIConstants.spacingXXXLarge),
+              child: loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : error != null
+                      ? Center(child: Text('Error: $error', style: Theme.of(context).textTheme.bodyLarge))
+                      : prefs == null
+                          ? const Center(child: Text('No preferences found.'))
+                          : ListView(
+                              shrinkWrap: true,
+                              children: [
+                                _buildNotificationPermissionSection(),
+                                _buildAlertTypesSection(prefs, provider),
+                                _buildDoNotDisturbSection(prefs, provider),
+                                _buildNotificationHistorySection(),
+                              ],
+                            ),
             ),
           ),
         ),

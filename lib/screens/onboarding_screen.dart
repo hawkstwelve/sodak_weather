@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../providers/onboarding_provider.dart';
-import '../services/notification_service.dart';
 // import '../theme/app_theme.dart';
 import 'package:geolocator/geolocator.dart';
 import '../providers/location_provider.dart';
@@ -219,16 +219,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ? null
                             : () async {
                                 setState(() => _notificationRequesting = true);
-                                final notificationService = Provider.of<NotificationService>(context, listen: false);
-                                await notificationService.requestPermissions();
-                                final settings = await notificationService.messaging.getNotificationSettings();
-                                if (!mounted) return;
-                                setState(() {
-                                  _notificationGranted = (settings.authorizationStatus == AuthorizationStatus.authorized || settings.authorizationStatus == AuthorizationStatus.provisional)
-                                      ? true
-                                      : false;
-                                  _notificationRequesting = false;
-                                });
+                                try {
+                                  final settings = await FirebaseMessaging.instance.requestPermission(
+                                    alert: true,
+                                    announcement: false,
+                                    badge: true,
+                                    carPlay: false,
+                                    criticalAlert: false,
+                                    provisional: false,
+                                    sound: true,
+                                  );
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _notificationGranted = (settings.authorizationStatus == AuthorizationStatus.authorized || settings.authorizationStatus == AuthorizationStatus.provisional)
+                                        ? true
+                                        : false;
+                                    _notificationRequesting = false;
+                                  });
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _notificationGranted = false;
+                                    _notificationRequesting = false;
+                                  });
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFD84315),
@@ -281,7 +295,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildGlassButton(String text) {
     return IntrinsicWidth(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+        constraints: const BoxConstraints(minWidth: 100.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12.0),
@@ -302,6 +317,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
+            overflow: TextOverflow.visible,
           ),
         ),
       ),
@@ -311,7 +327,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildDoneButton() {
     return IntrinsicWidth(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+        constraints: const BoxConstraints(minWidth: 100.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12.0),
@@ -332,6 +349,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
+            overflow: TextOverflow.visible,
           ),
         ),
       ),
@@ -347,12 +365,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       await locationProvider.getCurrentLocation(forceRefresh: true);
     } catch (e) {
       // Handle any errors silently
+      if (kDebugMode) {
+        print('OnboardingScreen: Error in _handleOnDone: $e');
+      }
     }
     
     if (!mounted) return;
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
+    
+    // Since onboarding is the home widget, we need to trigger a rebuild
+    // The main app will automatically show the main app when onboarding is complete
+    setState(() {});
   }
 
   Future<void> _handleOnSkip() async {
@@ -363,11 +385,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       await onboardingProvider.markComplete();
     } catch (e) {
       // Handle any errors silently
+      if (kDebugMode) {
+        print('OnboardingScreen: Error in _handleOnSkip: $e');
+      }
     }
     
     if (!mounted) return;
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
+    
+    // Since onboarding is the home widget, we need to trigger a rebuild
+    // The main app will automatically show the main app when onboarding is complete
+    setState(() {});
   }
 } 
