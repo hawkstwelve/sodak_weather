@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/sd_city.dart';
 import '../models/weather_data.dart';
 import '../models/hourly_forecast.dart';
@@ -59,8 +60,31 @@ class WeatherProvider with ChangeNotifier {
   WeatherProvider() {
     // Ensure selectedCity is always initialized with a default value
     _selectedCity = SDCities.siouxFalls;
-    // Don't fetch initial weather data here - wait for location provider to be set
-    // fetchAllWeatherData();
+    // Fetch initial weather data for default city to ensure app works immediately
+    _fetchInitialWeatherData();
+  }
+
+  /// Fetch initial weather data for the default city
+  /// This ensures the app has weather data even if location setup fails
+  Future<void> _fetchInitialWeatherData() async {
+    try {
+      // Add a small delay to allow the widget tree to build
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (kDebugMode) {
+        print('WeatherProvider: Fetching initial weather data for ${_selectedCity.name}');
+      }
+      await fetchAllWeatherData();
+      if (kDebugMode) {
+        print('WeatherProvider: Successfully loaded initial weather data');
+      }
+    } catch (e) {
+      // If initial fetch fails, set a basic error state but don't block the app
+      _errorMessage = 'Failed to load initial weather data';
+      if (kDebugMode) {
+        print('WeatherProvider: Failed to load initial weather data: $e');
+      }
+      notifyListeners();
+    }
   }
 
   /// Set the location provider reference
@@ -68,17 +92,29 @@ class WeatherProvider with ChangeNotifier {
     _locationProvider = locationProvider;
     
     try {
+      if (kDebugMode) {
+        print('WeatherProvider: Setting location provider, waiting for initialization...');
+      }
       // Wait for location provider to finish initializing
       await _locationProvider!.initializationDone;
+      if (kDebugMode) {
+        print('WeatherProvider: Location provider initialized, checking cached location...');
+      }
       // After setting the location provider, check if we should use cached location
       await _initializeWithCachedLocation();
       
       // Notify listeners that initialization is complete
+      if (kDebugMode) {
+        print('WeatherProvider: Location provider setup complete');
+      }
       notifyListeners();
     } catch (e) {
       // If initialization fails, fall back to default city
       _isUsingLocation = false;
       _selectedCity = SDCities.siouxFalls;
+      if (kDebugMode) {
+        print('WeatherProvider: Location provider setup failed, falling back to default city: $e');
+      }
       notifyListeners();
     }
   }
@@ -89,6 +125,10 @@ class WeatherProvider with ChangeNotifier {
       // Fall back to default city if no location provider
       _isUsingLocation = false;
       _selectedCity = SDCities.siouxFalls;
+      // Only fetch weather data if we don't already have it
+      if (_weatherData == null && !_isLoading) {
+        fetchAllWeatherData();
+      }
       notifyListeners();
       return;
     }
@@ -113,12 +153,19 @@ class WeatherProvider with ChangeNotifier {
       } else {
         _isUsingLocation = false;
         _selectedCity = SDCities.siouxFalls;
-        fetchAllWeatherData();
+        // Only fetch weather data if we don't already have it
+        if (_weatherData == null && !_isLoading) {
+          fetchAllWeatherData();
+        }
       }
     } catch (e) {
-      // If anything fails, fall back to default city
+      // If anything fails, fall back to default city but keep existing data if available
       _isUsingLocation = false;
       _selectedCity = SDCities.siouxFalls;
+      // Only fetch weather data if we don't already have it
+      if (_weatherData == null && !_isLoading) {
+        fetchAllWeatherData();
+      }
       notifyListeners();
     }
   }
@@ -406,11 +453,7 @@ class WeatherProvider with ChangeNotifier {
   /// Force the weather provider to be marked as initialized
   /// This is used as a fallback when location setup fails
   void forceInitialization() {
-    if (_locationProvider == null) {
-      // Create a dummy location provider reference to mark as initialized
-      // This allows the app to continue with default city functionality
-      _locationProvider = LocationProvider();
-    }
+    _locationProvider ??= LocationProvider();
     notifyListeners();
   }
 } 

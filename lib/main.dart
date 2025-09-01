@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,9 @@ import 'services/notification_service.dart';
 import 'services/backend_service.dart';
 // Firebase options are intentionally not hard-coded to avoid exposing secrets in CI
 
+// Global variable to track Firebase initialization status
+bool _firebaseInitialized = false;
+
 Future<void> main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +30,16 @@ Future<void> main() async {
   // Initialize Firebase if default platform configuration is available
   try {
     await Firebase.initializeApp();
+    _firebaseInitialized = true;
+    if (kDebugMode) {
+      print('Firebase initialized successfully');
+    }
   } catch (e) {
     // Skip Firebase initialization when configuration is not present (e.g., CI)
+    _firebaseInitialized = false;
+    if (kDebugMode) {
+      print('Firebase initialization failed: $e');
+    }
   }
   
   await FMTCObjectBoxBackend().initialise();
@@ -72,8 +84,12 @@ Future<void> main() async {
         ChangeNotifierProvider<NotificationService>(
           create: (_) {
             final service = NotificationService();
-            // Initialize the service after creation
-            service.initialize();
+            // Initialize the service after creation, but only if Firebase is available
+            if (_firebaseInitialized) {
+              service.initialize();
+            } else if (kDebugMode) {
+              print('Skipping notification service initialization - Firebase not available');
+            }
             return service;
           },
         ),
@@ -147,7 +163,7 @@ class _MyAppState extends State<MyApp> {
       // Set up weather provider with location provider with timeout protection
       try {
         await weatherProvider.setLocationProvider(locationProvider).timeout(
-          const Duration(seconds: 10),
+          const Duration(seconds: 5), // Reduced timeout for faster fallback
           onTimeout: () {
             // Force weather provider to be initialized even if location setup fails
             weatherProvider.forceInitialization();
@@ -156,6 +172,20 @@ class _MyAppState extends State<MyApp> {
       } catch (e) {
         // Force weather provider to be initialized even if location setup fails
         weatherProvider.forceInitialization();
+      }
+
+      // Ensure weather provider has data by forcing a fetch if needed
+      if (!weatherProvider.isLoading && weatherProvider.weatherData == null) {
+        try {
+          await weatherProvider.fetchAllWeatherData().timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              // Continue even if weather fetch times out
+            },
+          );
+        } catch (e) {
+          // Continue even if weather fetch fails
+        }
       }
 
       // Refresh location permissions to ensure we have the latest state
@@ -178,15 +208,25 @@ class _MyAppState extends State<MyApp> {
           locationProvider: locationProvider,
         );
 
-        // Initialize notification service with timeout protection
-        await notificationService.initialize().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            // Continue without notification service
-          },
-        );
+        // Initialize notification service with timeout protection, but only if Firebase is available
+        if (_firebaseInitialized) {
+          await notificationService.initialize().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              // Continue without notification service
+              if (kDebugMode) {
+                print('Notification service initialization timed out');
+              }
+            },
+          );
+        } else if (kDebugMode) {
+          print('Skipping notification service setup - Firebase not available');
+        }
       } catch (e) {
         // Continue without notification service
+        if (kDebugMode) {
+          print('Error setting up notification service: $e');
+        }
       }
 
       // Sync current location with backend for notifications (non-blocking)
@@ -266,7 +306,7 @@ class _MyAppState extends State<MyApp> {
                         if (!weatherProvider.isInitialized) {
                           // Add a timeout fallback to prevent infinite loading in release builds
                           return FutureBuilder(
-                            future: Future.delayed(const Duration(seconds: 20)),
+                            future: Future.delayed(const Duration(seconds: 8)), // Reduced from 20 to 8 seconds
                             builder: (context, snapshot) {
                               if (snapshot.connectionState == ConnectionState.done) {
                                 // Force initialization after timeout to prevent infinite loading

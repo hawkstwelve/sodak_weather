@@ -220,6 +220,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             : () async {
                                 setState(() => _notificationRequesting = true);
                                 try {
+                                  // Check if Firebase is properly initialized before requesting permissions
+                                  bool firebaseInitialized = false;
+                                  try {
+                                    // Try to access Firebase to check if it's initialized
+                                    await FirebaseMessaging.instance.getToken();
+                                    firebaseInitialized = true;
+                                  } catch (e) {
+                                    // Firebase is not initialized or has issues
+                                    firebaseInitialized = false;
+                                  }
+                                  
+                                  if (!firebaseInitialized) {
+                                    // If Firebase is not initialized, show error immediately
+                                    if (!mounted) return;
+                                    setState(() {
+                                      _notificationGranted = false;
+                                      _notificationRequesting = false;
+                                    });
+                                    return;
+                                  }
+                                  
                                   final settings = await FirebaseMessaging.instance.requestPermission(
                                     alert: true,
                                     announcement: false,
